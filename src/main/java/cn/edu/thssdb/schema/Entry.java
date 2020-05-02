@@ -2,6 +2,7 @@ package cn.edu.thssdb.schema;
 
 import cn.edu.thssdb.exception.InsertException;
 import cn.edu.thssdb.type.ColumnType;
+import org.apache.thrift.annotation.Nullable;
 
 import java.io.Serializable;
 
@@ -34,6 +35,9 @@ public class Entry implements Comparable<Entry>, Serializable {
 
     //把ori的数据类型转化为ColumnType中的一种
     public static Entry convertType(Object ori, ColumnType type) {
+        if(ori == null) {
+            return null;
+        }
         Entry entry;
         String str = ori.toString();
         switch (type) {

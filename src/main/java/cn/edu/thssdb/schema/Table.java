@@ -25,29 +25,24 @@ public class Table implements Iterable<Long> {
     private RandomAccessFile dataFile;
     private int primaryIndex;
 
-    public Table(String databaseName, String tableName, Column[] columns) {
-        // TODO
+    public Table(String databaseName, String tableName, Column[] columns)
+            throws IOException {
 
         // 如果文件存在：从文件中恢复B+树
-        File treeFile = new File(tableName + ".tree");
+        File treeFile = new File("data/" + tableName + ".tree");
         if (treeFile.exists())
             recover();
+        else {
+            index = new BPlusTree<Entry, Long>();
+        }
 
         //如果数据文件不存在，则新建
-        try {
-            File f = new File(tableName + ".data");
-            if(!f.exists()) {
-                try {
-                    f.createNewFile();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            dataFile = new RandomAccessFile(tableName + ".data", "rw");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        File f = new File("data/" + tableName + ".data");
+        if (!f.exists()) {
+            f.createNewFile();
         }
+
+        dataFile = new RandomAccessFile("data/" + tableName + ".data", "rw");
 
         this.databaseName = databaseName;
         this.tableName = tableName;
@@ -56,7 +51,7 @@ public class Table implements Iterable<Long> {
 
         //计算记录的最大长度
         rowSize = 0;
-        for(Column col: columns) {
+        for (Column col : columns) {
             rowSize = rowSize + col.getMaxByteLength() + 6; //6是存储字符串长度的6个字节
         }
     }
@@ -65,17 +60,13 @@ public class Table implements Iterable<Long> {
         // TODO
     }
 
-    public void insert(LinkedList values) {
+    public void insert(LinkedList values)
+            throws InsertException, IOException {
         // TODO
         if (values == null)
-            return ;
-        //合法性检查
-        try {
-            legalCheck(values);
-        } catch (InsertException e) {
-            e.printStackTrace();
             return;
-        }
+        //合法性检查
+        legalCheck(values);
 
         //在B+树中查找到相应的索引
         //把values转换成Row
@@ -86,7 +77,7 @@ public class Table implements Iterable<Long> {
         }
         index.put(key, rowNum);
 
-        // TODO: 按索引指示的文件位置，将该条记录持久化存储
+        //按索引指示的文件位置，将该条记录持久化存储
         serialize_row(newRow);
     }
 
@@ -97,32 +88,31 @@ public class Table implements Iterable<Long> {
         index.remove(key);
     }
 
-    public void update(LinkedList old_values, LinkedList new_values) {
+    public void update(LinkedList old_values, LinkedList new_values)
+            throws InsertException, IOException {
         // TODO
 
         delete(old_values);
         insert(new_values);
     }
 
-    private void serialize_row(Row row) {
+    private void serialize_row(Row row) throws IOException {
         // TODO
-        try {
-
-            byte[] rowData = new byte[rowSize];
-            Arrays.fill(rowData, (byte)0);
-            int pos = 0;
-            int n = columns.size();
-            for (int i = 0; i < n; ++i) {
-                pos += mNumber.toBytes(rowData, pos, row.get(i), columns.get(i).getType());
-            }
-
-            this.dataFile.seek(rowNum * rowSize);
-            this.dataFile.write(rowData, 0, rowSize);
-            rowNum++;
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        byte[] rowData = new byte[rowSize];
+        Arrays.fill(rowData, (byte) 0);
+        int pos = 0;
+        int n = columns.size();
+        for (int i = 0; i < n; ++i) {
+//            if(row.get(i) == null) {
+//                pos += mNumber.byteOfType(columns.get(i).)
+//            }
+            pos += mNumber.toBytes(rowData, pos, row.get(i), columns.get(i).getType());
         }
+
+        this.dataFile.seek(rowNum * rowSize);
+        this.dataFile.write(rowData, 0, rowSize);
+        rowNum++;
+
     }
 
     public void serialize_tree() {
@@ -137,7 +127,7 @@ public class Table implements Iterable<Long> {
 
     //从数据文件的指定行中获取一条记录
     public Row getRowFromFile(Long rowNum)
-        throws SearchException, IOException {
+            throws SearchException, IOException {
         if (rowNum < 0 || rowNum >= this.rowNum) {
             throw new SearchException(SearchException.ROW_NUM_ERROR);
         }
@@ -147,7 +137,7 @@ public class Table implements Iterable<Long> {
         dataFile.seek(offset);
         dataFile.read(buffer, 0, rowSize);
 
-        LinkedList row =new LinkedList();
+        LinkedList row = new LinkedList();
 
         int pos = 0;
         for (int i = 0; i < columns.size(); ++i) {
@@ -171,6 +161,10 @@ public class Table implements Iterable<Long> {
         // 各列元素类型
         for (int i = 0; i < values.size(); i++) {
             Object value = values.get(i);
+            if(value == null) {
+                if(columns.get(i).canBeNull())
+                    continue;
+            }
             boolean typeError = false;
             switch (columns.get(i).getType()) {
                 case INT:
@@ -213,6 +207,7 @@ public class Table implements Iterable<Long> {
         for (int i = 0; i < columns.size(); i++) {
             if (columns.get(i).isPrimary()) {
                 key = Entry.convertType(values.get(i), columns.get(i).getType());
+                break;
             }
         }
         return key;

@@ -34,42 +34,44 @@ public class mNumber {
             else
                 return byteOfType(type);
         }
-        switch (type) {
-            case INT:
-                tmp = Integer.toString((int)value).getBytes();
-                break;
-            case LONG:
-                tmp = Long.toString((long)value).getBytes();
-                break;
-            case FLOAT:
-                tmp = Float.toString((float)value).getBytes();
-                break;
-            case DOUBLE:
-                tmp = Double.toString((double)value).getBytes();
-                break;
-            case STRING:
-                //str_len是6位字节数组，保存字符串转成字节数组之后的长度
-                String length = String.valueOf(value.toString().getBytes().length);
-                byte[] str_len = new byte[6];
-                ByteArrayInputStream in = new ByteArrayInputStream(length.getBytes());
-                in.read(str_len);
-                System.out.println(str_len.length);
+        else {
+            switch (type) {
+                case INT:
+                    tmp = Integer.toString((int) value).getBytes();
+                    break;
+                case LONG:
+                    tmp = Long.toString((long) value).getBytes();
+                    break;
+                case FLOAT:
+                    tmp = Float.toString((float) value).getBytes();
+                    break;
+                case DOUBLE:
+                    tmp = Double.toString((double) value).getBytes();
+                    break;
+                case STRING:
+                    //str_len是6位字节数组，保存字符串转成字节数组之后的长度
+                    String length = String.valueOf(value.toString().getBytes().length);
+                    byte[] str_len = new byte[6];
+                    ByteArrayInputStream in = new ByteArrayInputStream(length.getBytes());
+                    in.read(str_len);
+                    System.out.println(str_len.length);
 
-                //把字符串长度str_len和字符串本身value拼接到tmp里
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                out.write(str_len);
-                out.write(value.toString().getBytes());
-                tmp = out.toByteArray();
+                    //把字符串长度str_len和字符串本身value拼接到tmp里
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    out.write(str_len);
+                    out.write(value.toString().getBytes());
+                    tmp = out.toByteArray();
 
 //                String length = String.format("%06d", value.toString().length());
 //                tmp = (length + value.toString()).getBytes();
-                break;
-            default:
-                throw new InsertException(InsertException.TYPE_MATCH_ERROR);
-        }
-        System.arraycopy(tmp, 0, bytes, pos, tmp.length);
+                    break;
+                default:
+                    throw new InsertException(InsertException.TYPE_MATCH_ERROR);
+            }
+            System.arraycopy(tmp, 0, bytes, pos, tmp.length);
 
-        return tmp.length;
+            return tmp.length;
+        }
     }
 
     /**
