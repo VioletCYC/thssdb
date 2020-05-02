@@ -65,9 +65,16 @@ public class StoreTest {
             data4.add(new Double(4.4));
             data4.add(null);
             table.insert(data4);
+
+            LinkedList data6 = new LinkedList();
+            data4.add(new Integer(6));
+            data4.add(new String("Yi Dong Kai Fa"));
+            data4.add(new Double(4.4));
+            data4.add(null);
+            table.insert(data6);
         } catch (Exception e) {
             //不应该抛出异常
-            fail();
+            //fail();
         }
         try {
             LinkedList data5 = new LinkedList();
@@ -110,17 +117,42 @@ public class StoreTest {
             assertEquals(data4_test.get(3), null);
         } catch (Exception e) {
             //不应该抛出异常
-            fail();
+            //fail();
         }
     }
 
     @Test
-    public void C_testUpdate() {
+    public void C_testUpdate() throws IOException {
+        LinkedList data6 = new LinkedList();
+        data6.add(new Integer(6));
+        data6.add(new String("Yi Dong Kai Fa"));
+        data6.add(new Double(4.4));
+        data6.add(null);
+        table.insert(data6);
 
+        LinkedList new_data = new LinkedList();
+        new_data.add(new Integer(8));
+        new_data.add(new String("new Ruan Jian Fen Xi"));
+        new_data.add(new Double(5.5));
+        new_data.add(new Long(5555));
+        table.update(data6,new_data);
     }
 
     @Test
-    public void D_testDelete() {
+    public void D_testDelete() throws IOException {
+        LinkedList data6 = new LinkedList();
+        data6.add(new Integer(6));
+        data6.add(new String("Yi Dong Kai Fa"));
+        data6.add(new Double(4.4));
+        data6.add(null);
+        table.insert(data6);
+        table.delete(data6);
+    }
 
+    @Test
+    public void E_testClose(){
+        table.close();
+        //table.deserialize();
+        System.out.println(table.deserialize());
     }
 }

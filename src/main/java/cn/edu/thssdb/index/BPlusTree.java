@@ -1,8 +1,11 @@
 package cn.edu.thssdb.index;
 
 import javafx.util.Pair;
+import org.apache.thrift.TSerializable;
 
-public final class BPlusTree<K extends Comparable<K>, V> implements Iterable<Pair<K, V>> {
+import java.io.Serializable;
+
+public final class BPlusTree<K extends Comparable<K>, V> implements Iterable<Pair<K, V>>, Serializable {
 
   BPlusTreeNode<K, V> root;
   private int size;

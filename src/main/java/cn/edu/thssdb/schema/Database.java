@@ -20,6 +20,7 @@ public class Database {
 
   private void persist() {
     // TODO
+
   }
 
   public void create(String name, Column[] columns) {

@@ -44,7 +44,7 @@ public class Table implements Iterable<Long> {
         // 如果文件存在：从文件中恢复B+树
         File treeFile = new File("data/" + tableName + ".tree");
         if (treeFile.exists())
-            recover();
+            deserialize();
         else {
             index = new BPlusTree<Entry, Long>();
         }
@@ -125,19 +125,32 @@ public class Table implements Iterable<Long> {
 
     }
 
+
     public void serialize_tree() {
         try {
             ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(tableName + ".tree"));
+            oos.writeObject(databaseName);
+            oos.writeObject(tableName);
+            oos.writeObject(columns);
             oos.writeObject(index);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private ArrayList<Row> deserialize() {
+    public BPlusTree<Entry, Long> deserialize() {
         // TODO
-
-        return null;
+        try (//创建一个ObjectInputStream输入流
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(tableName+".tree"))) {
+            databaseName = (String) ois.readObject();
+            tableName = (String) ois.readObject();
+            columns = (ArrayList<Column>) ois.readObject();
+            index = (BPlusTree<Entry, Long>) ois.readObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return index;
     }
 
     //从数据文件的指定行中获取一条记录
@@ -250,4 +263,10 @@ public class Table implements Iterable<Long> {
     public Iterator<Long> iterator() {
         return new TableIterator(this);
     }
+
+    public void close() {
+        serialize_tree();
+    }
+
+
 }

@@ -4,6 +4,7 @@ import cn.edu.thssdb.exception.DuplicateKeyException;
 import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.utils.Global;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 
