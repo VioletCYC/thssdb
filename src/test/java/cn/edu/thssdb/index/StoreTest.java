@@ -26,7 +26,7 @@ public class StoreTest {
         columns[1] = column2;
         columns[2] = column3;
         columns[3] = column4;
-        table = new Table("database", "testtable", columns);
+        table = new Table("database", "table", columns);
 
 
     }
@@ -36,7 +36,7 @@ public class StoreTest {
         try {
             LinkedList data1 = new LinkedList();
             data1.add(new Integer(1));
-            data1.add(new String("Zhang"));
+            data1.add(new String(""));
             data1.add(new Double(1.1));
             data1.add(new Long(111));
             table.insert(data1);

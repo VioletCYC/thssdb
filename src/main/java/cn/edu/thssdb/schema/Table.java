@@ -10,6 +10,14 @@ import javafx.util.Pair;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+
 
 public class Table implements Iterable<Long> {
     ReentrantReadWriteLock lock;
@@ -116,7 +124,12 @@ public class Table implements Iterable<Long> {
     }
 
     public void serialize_tree() {
-
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(tableName + ".tree"));
+            oos.writeObject(index);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private ArrayList<Row> deserialize() {
