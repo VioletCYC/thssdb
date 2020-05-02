@@ -1,84 +1,97 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
-
 package cn.edu.thssdb.index;
 
-import java.util.*;
-
-import cn.edu.thssdb.schema.Column;
-import cn.edu.thssdb.schema.Table;
+import cn.edu.thssdb.schema.*;
 import cn.edu.thssdb.type.ColumnType;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.util.LinkedList;
+
+import static org.junit.Assert.*;
+
 public class StoreTest {
     private Table table;
-    /*
-    private BPlusTree<Integer, Integer> tree;
-    private ArrayList<Integer> keys;
-    private ArrayList<Integer> values;
-    private HashMap<Integer, Integer> map;
-    */
-
-    public StoreTest() {
-    }
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
         Column column1 = new Column("column1", ColumnType.INT, 1, true, 2);
-        Column column2 = new Column("column3", ColumnType.STRING, 0, false, 10);
-        Column column3 = new Column("column2", ColumnType.DOUBLE, 0, true, 5);
-        Column column4 = new Column("column2", ColumnType.LONG, 0, false, 4);
+        Column column2 = new Column("column2", ColumnType.STRING, 0, false, 30);
+        Column column3 = new Column("column3", ColumnType.DOUBLE, 0, true, 5);
+        Column column4 = new Column("column4", ColumnType.LONG, 0, false, 4);
+
 
         Column[] columns = new Column[4];
         columns[0] = column1;
         columns[1] = column2;
         columns[2] = column3;
         columns[3] = column4;
-        Table table = new Table("database", "testtable", columns);
+        table = new Table("database", "testtable", columns);
+
+
     }
 
     @Test
     public void testInsert() {
-        LinkedList values = new LinkedList();
-        values.add(new Integer(4));
-        values.add(new String("testtest"));
-        values.add(new Double(0.4));
-        values.add(new Long(2));
-        table.insert(values);
+        try {
+            LinkedList data1 = new LinkedList();
+            data1.add(new Integer(1));
+            data1.add(new String("Zhang"));
+            data1.add(new Double(1.1));
+            data1.add(new Long(111));
+            table.insert(data1);
 
+            LinkedList data2 = new LinkedList();
+            data2.add(new Integer(2));
+            data2.add(new String("Shu Ju Ku"));
+            data2.add(new Double(2.2));
+            data2.add(new Long(2222));
+            table.insert(data2);
+
+            LinkedList data3 = new LinkedList();
+            data3.add(new Integer(3));
+            data3.add(null);
+            data3.add(new Double(3.3));
+            data3.add(new Long(3333));
+            table.insert(data3);
+
+            LinkedList data4 = new LinkedList();
+            data4.add(new Integer(4));
+            data4.add(new String("Yi Dong Kai Fa"));
+            data4.add(new Double(4.4));
+            data4.add(null);
+            table.insert(data4);
+        } catch (Exception e) {
+            //不应该抛出异常
+            fail();
+        }
+        try {
+            LinkedList data5 = new LinkedList();
+            data5.add(new Integer(4));
+            data5.add(new String("Ruan Jian Fen Xi"));
+            data5.add(new Double(5.5));
+            data5.add(new Long(5555));
+            table.insert(data5);
+
+            //应该在这里抛出主键重复的异常
+            fail();
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
     }
-/*
+
     @Test
-    public void testRemove() {
-        int size = this.keys.size();
-
-        int i;
-        for(i = 0; i < size; i += 2) {
-            this.tree.remove((Comparable)this.keys.get(i));
-        }
-
-        Assert.assertEquals((long)(size / 2), (long)this.tree.size());
-
-        for(i = 1; i < size; i += 2) {
-            Assert.assertEquals(this.map.get(this.keys.get(i)), this.tree.get((Comparable)this.keys.get(i)));
-        }
+    public void testDelete() {
 
     }
 
     @Test
-    public void testIterator() {
-        BPlusTreeIterator<Integer, Integer> iterator = this.tree.iterator();
+    public void testUpdate() {
 
-        int c;
-        for(c = 0; iterator.hasNext(); ++c) {
-            Assert.assertTrue(this.values.contains(iterator.next().getValue()));
-        }
-
-        Assert.assertEquals((long)this.values.size(), (long)c);
     }
-*/
+
+    @Test
+    public void recover() {
+
+    }
 }
