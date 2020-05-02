@@ -29,12 +29,17 @@ public class Table implements Iterable<Long> {
     //一条记录的最大长度（字节）
     private int rowSize;
     //指示下一条记录要写在文件中的位置
-    private long rowNum = 0;
+    public long rowNum = 0;
     private RandomAccessFile dataFile;
     private int primaryIndex;
 
     public Table(String databaseName, String tableName, Column[] columns)
             throws IOException {
+        //TODO: 这几行之后应该挪到Manager里面
+        //如果目录存不存在，则先创建目录
+        File dir = new File("data/");
+        if(!dir.exists())
+            dir.mkdirs();
 
         // 如果文件存在：从文件中恢复B+树
         File treeFile = new File("data/" + tableName + ".tree");
@@ -111,15 +116,12 @@ public class Table implements Iterable<Long> {
         int pos = 0;
         int n = columns.size();
         for (int i = 0; i < n; ++i) {
-//            if(row.get(i) == null) {
-//                pos += mNumber.byteOfType(columns.get(i).)
-//            }
             pos += mNumber.toBytes(rowData, pos, row.get(i), columns.get(i).getType());
         }
 
         this.dataFile.seek(rowNum * rowSize);
         this.dataFile.write(rowData, 0, rowSize);
-        rowNum++;
+        rowNum += 1;
 
     }
 
@@ -139,13 +141,13 @@ public class Table implements Iterable<Long> {
     }
 
     //从数据文件的指定行中获取一条记录
-    public Row getRowFromFile(Long rowNum)
+    public Row getRowFromFile(Long des_rowNum)
             throws SearchException, IOException {
-        if (rowNum < 0 || rowNum >= this.rowNum) {
+        if (des_rowNum < 0 || des_rowNum >= rowNum) {
             throw new SearchException(SearchException.ROW_NUM_ERROR);
         }
 
-        long offset = rowSize * rowNum;
+        long offset = rowSize * des_rowNum;
         byte[] buffer = new byte[this.rowSize];
         dataFile.seek(offset);
         dataFile.read(buffer, 0, rowSize);
