@@ -1,36 +1,64 @@
 package cn.edu.thssdb.schema;
 
 import cn.edu.thssdb.exception.InsertException;
+import cn.edu.thssdb.exception.SearchException;
 import cn.edu.thssdb.index.BPlusTree;
 import cn.edu.thssdb.type.ColumnType;
+import cn.edu.thssdb.utils.mNumber;
 import javafx.util.Pair;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class Table implements Iterable<Row> {
+public class Table implements Iterable<Long> {
     ReentrantReadWriteLock lock;
     private String databaseName;
     public String tableName;
     public ArrayList<Column> columns;
-    public BPlusTree<Entry, Row> index;
+    //B+树节点的key是主键，value是文件索引
+    public BPlusTree<Entry, Long> index;
+    //一条记录的最大长度（字节）
+    private int rowSize;
+    //指示下一条记录要写在文件中的位置
+    private long rowNum = 0;
+    private RandomAccessFile dataFile;
     private int primaryIndex;
 
     public Table(String databaseName, String tableName, Column[] columns) {
         // TODO
-        File file = new File(tableName + ".tree");
+
         // 如果文件存在：从文件中恢复B+树
-        if (file.exists())
+        File treeFile = new File(tableName + ".tree");
+        if (treeFile.exists())
             recover();
+
+        //如果数据文件不存在，则新建
+        try {
+            File f = new File(tableName + ".data");
+            if(!f.exists()) {
+                try {
+                    f.createNewFile();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            dataFile = new RandomAccessFile(tableName + ".data", "rw");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
         this.databaseName = databaseName;
         this.tableName = tableName;
         this.columns = new ArrayList<Column>();
         Collections.addAll(this.columns, columns);
+
+        //计算记录的最大长度
+        rowSize = 0;
+        for(Column col: columns) {
+            rowSize = rowSize + col.getMaxByteLength() + 6; //6是存储字符串长度的6个字节
+        }
     }
 
     private void recover() {
@@ -56,10 +84,10 @@ public class Table implements Iterable<Row> {
         for (int i = 0; i < columns.size(); i++) {
             newRow.appendOneEntry(Entry.convertType(values.get(i), columns.get(i).getType()));
         }
-        index.put(key, newRow);
+        index.put(key, rowNum);
 
         // TODO: 按索引指示的文件位置，将该条记录持久化存储
-
+        serialize_row(newRow);
     }
 
     public void delete(LinkedList values) {
@@ -76,13 +104,62 @@ public class Table implements Iterable<Row> {
         insert(new_values);
     }
 
-    private void serialize() {
+    private void serialize_row(Row row) {
         // TODO
+        try {
+
+            byte[] rowData = new byte[rowSize];
+            Arrays.fill(rowData, (byte)0);
+            int pos = 0;
+            int n = columns.size();
+            for (int i = 0; i < n; ++i) {
+                pos += mNumber.toBytes(rowData, pos, row.get(i), columns.get(i).getType());
+            }
+
+            this.dataFile.seek(rowNum * rowSize);
+            this.dataFile.write(rowData, 0, rowSize);
+            rowNum++;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void serialize_tree() {
+
     }
 
     private ArrayList<Row> deserialize() {
         // TODO
+
         return null;
+    }
+
+    //从数据文件的指定行中获取一条记录
+    public Row getRowFromFile(Long rowNum)
+        throws SearchException, IOException {
+        if (rowNum < 0 || rowNum >= this.rowNum) {
+            throw new SearchException(SearchException.ROW_NUM_ERROR);
+        }
+
+        long offset = rowSize * rowNum;
+        byte[] buffer = new byte[this.rowSize];
+        dataFile.seek(offset);
+        dataFile.read(buffer, 0, rowSize);
+
+        LinkedList row =new LinkedList();
+
+        int pos = 0;
+        for (int i = 0; i < columns.size(); ++i) {
+            pos += mNumber.fromBytes(row, buffer, pos, columns.get(i).getType());
+        }
+        //把row转换成Row类型
+        Row newRow = new Row();
+        for (int i = 0; i < columns.size(); i++) {
+            newRow.appendOneEntry(Entry.convertType(row.get(i), columns.get(i).getType()));
+        }
+
+        return newRow;
     }
 
     //字段合法性检查
@@ -141,8 +218,8 @@ public class Table implements Iterable<Row> {
         return key;
     }
 
-    private class TableIterator implements Iterator<Row> {
-        private Iterator<Pair<Entry, Row>> iterator;
+    private class TableIterator implements Iterator<Long> {
+        private Iterator<Pair<Entry, Long>> iterator;
 
         TableIterator(Table table) {
             this.iterator = table.index.iterator();
@@ -154,13 +231,13 @@ public class Table implements Iterable<Row> {
         }
 
         @Override
-        public Row next() {
+        public Long next() {
             return iterator.next().getValue();
         }
     }
 
     @Override
-    public Iterator<Row> iterator() {
+    public Iterator<Long> iterator() {
         return new TableIterator(this);
     }
 }

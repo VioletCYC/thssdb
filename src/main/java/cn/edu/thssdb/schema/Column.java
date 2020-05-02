@@ -1,6 +1,7 @@
 package cn.edu.thssdb.schema;
 
 import cn.edu.thssdb.type.ColumnType;
+import cn.edu.thssdb.utils.mNumber;
 
 public class Column implements Comparable<Column> {
   private String name;
@@ -24,6 +25,12 @@ public class Column implements Comparable<Column> {
 
   public ColumnType getType() {
     return type;
+  }
+
+  //获得以字节为单位的最大长度
+  public int getMaxByteLength() {
+    int typeByte = mNumber.byteOfType(type);
+    return maxLength * typeByte;
   }
 
   public boolean isPrimary() {
