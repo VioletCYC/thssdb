@@ -2,14 +2,20 @@ package cn.edu.thssdb.index;
 
 import cn.edu.thssdb.schema.*;
 import cn.edu.thssdb.type.ColumnType;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 import java.util.LinkedList;
 
 import static org.junit.Assert.*;
 
+//按字母顺序执行测试用例
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class StoreTest {
     private Table table;
 
@@ -27,12 +33,10 @@ public class StoreTest {
         columns[2] = column3;
         columns[3] = column4;
         table = new Table("database", "testtable", columns);
-
-
     }
 
     @Test
-    public void testInsert() {
+    public void A_testInsert() {
         try {
             LinkedList data1 = new LinkedList();
             data1.add(new Integer(1));
@@ -78,20 +82,45 @@ public class StoreTest {
         } catch (Exception e) {
             System.out.println(e.toString());
         }
-    }
 
-    @Test
-    public void testDelete() {
+        //TODO: 手动serialize tree
 
     }
 
     @Test
-    public void testUpdate() {
+    public void B_testRecover() {
+        try {
+            table.rowNum = 5;
+            Row data1_test = table.getRowFromFile((long) 0);
+            assertEquals(data1_test.get(0), (Integer)1);
+            assertEquals(data1_test.get(1), (String)"Zhang");
+            assertEquals(data1_test.get(2), (double)1.1);
+            assertEquals(data1_test.get(3), (long)111);
+
+            Row data3_test = table.getRowFromFile((long)2);
+            assertEquals(data3_test.get(0), (Integer)3);
+            assertEquals(data3_test.get(1), null);
+            assertEquals(data3_test.get(2), (double)3.3);
+            assertEquals(data3_test.get(3), (long)3333);
+
+            Row data4_test = table.getRowFromFile((long)3);
+            assertEquals(data4_test.get(0), (Integer)4);
+            assertEquals(data4_test.get(1), (String)"Yi Dong Kai Fa");
+            assertEquals(data4_test.get(2), (double)4.4);
+            assertEquals(data4_test.get(3), null);
+        } catch (Exception e) {
+            //不应该抛出异常
+            fail();
+        }
+    }
+
+    @Test
+    public void C_testUpdate() {
 
     }
 
     @Test
-    public void recover() {
+    public void D_testDelete() {
 
     }
 }

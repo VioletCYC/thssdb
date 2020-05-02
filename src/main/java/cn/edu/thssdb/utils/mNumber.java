@@ -25,6 +25,7 @@ public class mNumber {
     public static int toBytes(byte[] bytes, int pos, Object value, ColumnType type)
         throws InsertException, IOException {
         byte[] tmp;
+        int pos_offset; //本次写操作之后，要在字节数组中偏移的量
         if (value == null) {
             if (type == ColumnType.STRING) {
                 tmp = "000000".getBytes();
@@ -38,15 +39,19 @@ public class mNumber {
             switch (type) {
                 case INT:
                     tmp = Integer.toString((int) value).getBytes();
+                    pos_offset = byteOfType(ColumnType.INT);
                     break;
                 case LONG:
                     tmp = Long.toString((long) value).getBytes();
+                    pos_offset = byteOfType(ColumnType.LONG);
                     break;
                 case FLOAT:
                     tmp = Float.toString((float) value).getBytes();
+                    pos_offset = byteOfType(ColumnType.FLOAT);
                     break;
                 case DOUBLE:
                     tmp = Double.toString((double) value).getBytes();
+                    pos_offset = byteOfType(ColumnType.DOUBLE);
                     break;
                 case STRING:
                     //str_len是6位字节数组，保存字符串转成字节数组之后的长度
@@ -61,6 +66,7 @@ public class mNumber {
                     out.write(str_len);
                     out.write(value.toString().getBytes());
                     tmp = out.toByteArray();
+                    pos_offset = tmp.length;
 
 //                String length = String.format("%06d", value.toString().length());
 //                tmp = (length + value.toString()).getBytes();
@@ -70,7 +76,7 @@ public class mNumber {
             }
             System.arraycopy(tmp, 0, bytes, pos, tmp.length);
 
-            return tmp.length;
+            return pos_offset;
         }
     }
 
@@ -85,39 +91,58 @@ public class mNumber {
      */
     public static int fromBytes(LinkedList list, byte[] buffer, int pos, ColumnType type)
             throws InsertException {
-        int len = 0;
+        int len = 0;    //要从buffer读出来的字节数
+        String value;   //从buffer读出来的字节数组对应的字符串值
         byte[] tmp;
         switch (type) {
             case INT:
-                len = Integer.BYTES;
+                len = byteOfType(ColumnType.INT);
                 //从buffer中读出固定长度的字节
                 tmp = new byte[len];
                 System.arraycopy(buffer, pos, tmp, 0, len);
-                //转为整数
-                list.add(Integer.parseInt(new String(tmp)));
+                //把字节数组变成字符串。trim()是去掉字符串首尾的空白符
+                value = new String(tmp).trim();
+                //说明该字段是null
+                if(value.equals(""))
+                    list.add(null);
+                //否则转为整数.
+                else
+                    list.add(Integer.parseInt(value));
                 break;
             case LONG:
-                len = Long.BYTES;
+                len = byteOfType(ColumnType.LONG);
                 tmp = new byte[len];
                 System.arraycopy(buffer, pos, tmp, 0, len);
-                list.add(Long.parseLong(new String(tmp)));
+                value = new String(tmp).trim();
+                if(value.equals(""))
+                    list.add(null);
+                else
+                    list.add(Long.parseLong(value));
                 break;
             case FLOAT:
-                len = Float.BYTES;
+                len = byteOfType(ColumnType.FLOAT);
                 tmp = new byte[len];
                 System.arraycopy(buffer, pos, tmp, 0, len);
-                list.add(Float.parseFloat(new String(tmp)));
+                value = new String(tmp).trim();
+                if(value.equals(""))
+                    list.add(null);
+                else
+                    list.add(Float.parseFloat(value));
                 break;
             case DOUBLE:
-                len = Double.BYTES;
+                len = byteOfType(ColumnType.DOUBLE);
                 tmp = new byte[len];
                 System.arraycopy(buffer, pos, tmp, 0, len);
-                list.add(Double.parseDouble(new String(tmp)));
+                value = new String(tmp).trim();
+                if(value.equals(""))
+                    list.add(null);
+                else
+                    list.add(Double.parseDouble(value));
                 break;
             case STRING:
                 byte[] tmp_strLength = new byte[6];
                 System.arraycopy(buffer, pos, tmp_strLength, 0, 6);
-                int strByteLength = Integer.parseInt(new String(tmp_strLength));
+                int strByteLength = Integer.parseInt(new String(tmp_strLength).trim());
                 if(strByteLength == 0) {
                     list.add(null);
                 }
@@ -135,25 +160,28 @@ public class mNumber {
         return len;
     }
 
-
-    //获得5种基本数据类型的字节长度
+    /**
+     * 获得5种基本数据类型存储在文件中时所占的字节数。对于数字而言，每一个字节用于表示一个十进制整数或小数点。
+     * @param type ColumnType类型
+     * @return 字节数
+     */
     public static int byteOfType(ColumnType type) {
         int typeByte = 0;
         switch (type) {
             case INT:
-                typeByte = Integer.BYTES;
+                typeByte = 16;
                 break;
             case LONG:
-                typeByte = Long.BYTES;
+                typeByte = 24;
                 break;
             case FLOAT:
-                typeByte = Float.BYTES;
+                typeByte = 32;
                 break;
             case DOUBLE:
-                typeByte = Double.BYTES;
+                typeByte = 64;
                 break;
             case STRING:
-                typeByte = Character.BYTES;
+                typeByte = 128;
                 break;
             default:
                 break;
