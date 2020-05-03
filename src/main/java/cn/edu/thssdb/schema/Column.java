@@ -29,12 +29,6 @@ public class Column implements Comparable<Column>, Serializable {
     return type;
   }
 
-  //获得以字节为单位的最大长度
-  public int getMaxByteLength() {
-    int typeByte = mNumber.byteOfType(type);
-    return maxLength * typeByte;
-  }
-
   public boolean isPrimary() {
     return primary != 0;
   }

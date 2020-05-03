@@ -59,7 +59,6 @@ public class mNumber {
                     byte[] str_len = new byte[6];
                     ByteArrayInputStream in = new ByteArrayInputStream(length.getBytes());
                     in.read(str_len);
-                    System.out.println(str_len.length);
 
                     //把字符串长度str_len和字符串本身value拼接到tmp里
                     ByteArrayOutputStream out = new ByteArrayOutputStream();

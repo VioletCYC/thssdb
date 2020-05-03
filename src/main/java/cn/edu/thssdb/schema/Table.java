@@ -19,22 +19,23 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 
-public class Table implements Iterable<Long> {
+//public class Table implements Iterable<Long> {
+public class Table {
     ReentrantReadWriteLock lock;
     private String databaseName;
     public String tableName;
     public ArrayList<Column> columns;
-    //B+树节点的key是主键，value是文件索引
-    public BPlusTree<Entry, Long> index;
-    //一条记录的最大长度（字节）
-    private int rowSize;
-    //指示下一条记录要写在文件中的位置
-    public long rowNum = 0;
+    //B+树节点的key是主键，value是文件索引数组，第一个值是起始位置，第二个值是长度
+    public BPlusTree<Entry, ArrayList<Integer>> index;
+    //一条记录的最大可能长度（字节）
+    private int maxRowSize = 0;
+    //指示下一条记录要写在文件中的起始位置
+    public int lastBytePos = 0;
     private RandomAccessFile dataFile;
     private int primaryIndex;
 
     public Table(String databaseName, String tableName, Column[] columns)
-            throws IOException {
+            throws IOException, ClassNotFoundException {
         //TODO: 这几行之后应该挪到Manager里面
         //如果目录存不存在，则先创建目录
         File dir = new File("data/");
@@ -44,9 +45,9 @@ public class Table implements Iterable<Long> {
         // 如果文件存在：从文件中恢复B+树
         File treeFile = new File("data/" + tableName + ".tree");
         if (treeFile.exists())
-            deserialize();
+            index = deserialize_tree(tableName);
         else {
-            index = new BPlusTree<Entry, Long>();
+            index = new BPlusTree<Entry, ArrayList<Integer>>();
         }
 
         //如果数据文件不存在，则新建
@@ -63,9 +64,9 @@ public class Table implements Iterable<Long> {
         Collections.addAll(this.columns, columns);
 
         //计算记录的最大长度
-        rowSize = 0;
+        maxRowSize = 0;
         for (Column col : columns) {
-            rowSize = rowSize + col.getMaxByteLength() + 6; //6是存储字符串长度的6个字节
+            maxRowSize = maxRowSize + mNumber.byteOfType(col.getType());
         }
     }
 
@@ -81,21 +82,21 @@ public class Table implements Iterable<Long> {
         //合法性检查
         legalCheck(values);
 
-        //在B+树中查找到相应的索引
         //把values转换成Row
         Entry key = getKey(values);
         Row newRow = new Row();
         for (int i = 0; i < columns.size(); i++) {
             newRow.appendOneEntry(Entry.convertType(values.get(i), columns.get(i).getType()));
         }
-        index.put(key, rowNum);
 
-        //按索引指示的文件位置，将该条记录持久化存储
-        serialize_row(newRow);
+        //将该条记录持久化存储，获得文件的存储位置
+        ArrayList<Integer> storePos = serialize_row(newRow);
+
+        //在B+树中插入新的节点
+        index.put(key, storePos);
     }
 
     public void delete(LinkedList values) {
-        // TODO
         //TODO: 合法性检查（是不是在查询时已经保证了？）
         Entry key = getKey(values);
         index.remove(key);
@@ -103,67 +104,73 @@ public class Table implements Iterable<Long> {
 
     public void update(LinkedList old_values, LinkedList new_values)
             throws InsertException, IOException {
-        // TODO
-
         delete(old_values);
         insert(new_values);
     }
 
-    private void serialize_row(Row row) throws IOException {
-        // TODO
-        byte[] rowData = new byte[rowSize];
+    private ArrayList<Integer> serialize_row(Row row)
+            throws IOException {
+        byte[] rowData = new byte[maxRowSize];
         Arrays.fill(rowData, (byte) 0);
-        int pos = 0;
+
+        int recordSize = 0; //该条记录所占的字节数
         int n = columns.size();
         for (int i = 0; i < n; ++i) {
-            pos += mNumber.toBytes(rowData, pos, row.get(i), columns.get(i).getType());
+            recordSize += mNumber.toBytes(rowData, recordSize, row.get(i), columns.get(i).getType());
         }
 
-        this.dataFile.seek(rowNum * rowSize);
-        this.dataFile.write(rowData, 0, rowSize);
-        rowNum += 1;
+        this.dataFile.seek(lastBytePos);
+        this.dataFile.write(rowData, 0, recordSize);
 
+        //这条记录存储的位置
+        ArrayList<Integer> storePos = new ArrayList<>(2);
+        storePos.add(lastBytePos);
+        storePos.add(recordSize);
+
+        //文件末尾指针向前移动一次
+        lastBytePos += recordSize;
+
+        return storePos;
     }
 
-
-    public void serialize_tree() {
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(tableName + ".tree"));
-            oos.writeObject(databaseName);
-            oos.writeObject(tableName);
-            oos.writeObject(columns);
-            oos.writeObject(index);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void serialize_tree()
+            throws IOException {
+        //先检查文件是否存在
+        File treeFile = new File("data/" + tableName + ".tree");
+        if (!treeFile.exists()) {
+            treeFile.createNewFile();
         }
+
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("data/" + tableName + ".tree"));
+        oos.writeObject(databaseName);
+        oos.writeObject(tableName);
+        oos.writeObject(columns);
+        oos.writeObject((Integer)lastBytePos);
+        oos.writeObject(index);
     }
 
-    public BPlusTree<Entry, Long> deserialize() {
-        // TODO
-        try (//创建一个ObjectInputStream输入流
-            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(tableName+".tree"))) {
-            databaseName = (String) ois.readObject();
-            tableName = (String) ois.readObject();
-            columns = (ArrayList<Column>) ois.readObject();
-            index = (BPlusTree<Entry, Long>) ois.readObject();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public BPlusTree<Entry, ArrayList<Integer>> deserialize_tree(String tableName)
+            throws IOException, ClassNotFoundException {
+        //创建一个ObjectInputStream输入流
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("data/" + tableName + ".tree"));
+        databaseName = (String) ois.readObject();
+        tableName = (String) ois.readObject();
+        columns = (ArrayList<Column>) ois.readObject();
+        lastBytePos = (Integer) ois.readObject();
+        index = (BPlusTree<Entry, ArrayList<Integer>>) ois.readObject();
         return index;
     }
 
-    //从数据文件的指定行中获取一条记录
-    public Row getRowFromFile(Long des_rowNum)
+    //按主键从文件中获取一条记录
+    public Row getRowFromFile(Entry key)
             throws SearchException, IOException {
-        if (des_rowNum < 0 || des_rowNum >= rowNum) {
-            throw new SearchException(SearchException.ROW_NUM_ERROR);
-        }
 
-        long offset = rowSize * des_rowNum;
-        byte[] buffer = new byte[this.rowSize];
+        ArrayList<Integer> storePos = index.get(key);
+        int offset = storePos.get(0);   //文件起始位置
+        int length = storePos.get(1);   //读入的字节数（记录长度）
+        byte[] buffer = new byte[length];
         dataFile.seek(offset);
-        dataFile.read(buffer, 0, rowSize);
+        dataFile.read(buffer, 0, length);
 
         LinkedList row = new LinkedList();
 
@@ -241,30 +248,31 @@ public class Table implements Iterable<Long> {
         return key;
     }
 
-    private class TableIterator implements Iterator<Long> {
-        private Iterator<Pair<Entry, Long>> iterator;
+//    private class TableIterator implements Iterator<Integer> {
+//        private Iterator<Pair<Entry, ArrayList<Integer>>> iterator;
+//
+//        TableIterator(Table table) {
+//            this.iterator = table.index.iterator();
+//        }
+//
+//        @Override
+//        public boolean hasNext() {
+//            return iterator.hasNext();
+//        }
+//
+//        @Override
+//        public ArrayList<Integer> next() {
+//            return iterator.next().getValue();
+//        }
+//    }
+//
+//    @Override
+//    public Iterator<ArrayList<Integer>> iterator() {
+//        return new TableIterator(this);
+//    }
 
-        TableIterator(Table table) {
-            this.iterator = table.index.iterator();
-        }
-
-        @Override
-        public boolean hasNext() {
-            return iterator.hasNext();
-        }
-
-        @Override
-        public Long next() {
-            return iterator.next().getValue();
-        }
-    }
-
-    @Override
-    public Iterator<Long> iterator() {
-        return new TableIterator(this);
-    }
-
-    public void close() {
+    public void close()
+            throws IOException {
         serialize_tree();
     }
 
