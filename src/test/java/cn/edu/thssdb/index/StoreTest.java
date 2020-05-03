@@ -91,13 +91,14 @@ public class StoreTest {
         }
 
         //TODO: 手动serialize tree
+        table.serialize_tree();
 
     }
 
     @Test
     public void B_testRecover() {
         try {
-            table.rowNum = 5;
+            //table.rowNum = 5;
             Row data1_test = table.getRowFromFile((long) 0);
             assertEquals(data1_test.get(0), (Integer)1);
             assertEquals(data1_test.get(1), (String)"Zhang");
@@ -134,7 +135,7 @@ public class StoreTest {
         new_data.add(new Integer(8));
         new_data.add(new String("new Ruan Jian Fen Xi"));
         new_data.add(new Double(5.5));
-        new_data.add(new Long(5555));
+        new_data.add(null);
         table.update(data6,new_data);
     }
 
@@ -150,9 +151,40 @@ public class StoreTest {
     }
 
     @Test
-    public void E_testClose(){
+    public void E_testClose() throws IOException {
+        LinkedList data1 = new LinkedList();
+        data1.add(new Integer(1));
+        data1.add(new String("Zhang"));
+        data1.add(new Double(1.1));
+        data1.add(new Long(111));
+        table.insert(data1);
+
+        LinkedList data2 = new LinkedList();
+        data2.add(new Integer(2));
+        data2.add(new String("Shu Ju Ku"));
+        data2.add(new Double(2.2));
+        data2.add(new Long(2222));
+        table.insert(data2);
+
+        LinkedList data3 = new LinkedList();
+        data3.add(new Integer(3));
+        data3.add(null);
+        data3.add(new Double(3.3));
+        data3.add(new Long(3333));
+        table.insert(data3);
+
+        LinkedList data4 = new LinkedList();
+        data4.add(new Integer(4));
+        data4.add(new String("Yi Dong Kai Fa"));
+        data4.add(new Double(4.4));
+        data4.add(null);
+        table.insert(data4);
+
+
+
         table.close();
-        //table.deserialize();
+        table.deserialize();
         System.out.println(table.deserialize());
+        System.out.println(table.index.size());
     }
 }
