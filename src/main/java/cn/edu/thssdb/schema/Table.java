@@ -37,13 +37,9 @@ public class Table {
     public Table(String databaseName, String tableName, Column[] columns)
             throws IOException, ClassNotFoundException {
         //TODO: 这几行之后应该挪到Manager里面
-        //如果目录存不存在，则先创建目录
-        File dir = new File("data/");
-        if(!dir.exists())
-            dir.mkdirs();
 
         // 如果文件存在：从文件中恢复B+树
-        File treeFile = new File("data/" + tableName + ".tree");
+        File treeFile = new File("data/" + databaseName + "/" + tableName + ".tree");
         if (treeFile.exists())
             index = deserialize_tree(tableName);
         else {
@@ -51,12 +47,12 @@ public class Table {
         }
 
         //如果数据文件不存在，则新建
-        File f = new File("data/" + tableName + ".data");
+        File f = new File("data/" + databaseName + "/" + tableName + ".data");
         if (!f.exists()) {
             f.createNewFile();
         }
 
-        dataFile = new RandomAccessFile("data/" + tableName + ".data", "rw");
+        dataFile = new RandomAccessFile("data/" + databaseName + "/" + tableName + ".data", "rw");
 
         this.databaseName = databaseName;
         this.tableName = tableName;
@@ -95,6 +91,7 @@ public class Table {
         //在B+树中插入新的节点
         index.put(key, storePos);
     }
+
 
     public void delete(LinkedList values) {
         //TODO: 合法性检查（是不是在查询时已经保证了？）
@@ -136,28 +133,30 @@ public class Table {
     public void serialize_tree()
             throws IOException {
         //先检查文件是否存在
-        File treeFile = new File("data/" + tableName + ".tree");
+        File treeFile = new File("data/" + databaseName + "/" + tableName + ".tree");
         if (!treeFile.exists()) {
             treeFile.createNewFile();
         }
 
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("data/" + tableName + ".tree"));
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("data/" + databaseName + "/" + tableName + ".tree"));
         oos.writeObject(databaseName);
         oos.writeObject(tableName);
         oos.writeObject(columns);
         oos.writeObject((Integer)lastBytePos);
         oos.writeObject(index);
+        oos.close();
     }
 
     public BPlusTree<Entry, ArrayList<Integer>> deserialize_tree(String tableName)
             throws IOException, ClassNotFoundException {
         //创建一个ObjectInputStream输入流
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("data/" + tableName + ".tree"));
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("data/" + databaseName + "/" + tableName + ".tree"));
         databaseName = (String) ois.readObject();
         tableName = (String) ois.readObject();
         columns = (ArrayList<Column>) ois.readObject();
         lastBytePos = (Integer) ois.readObject();
         index = (BPlusTree<Entry, ArrayList<Integer>>) ois.readObject();
+        ois.close();
         return index;
     }
 
@@ -273,6 +272,7 @@ public class Table {
 
     public void close()
             throws IOException {
+        dataFile.close();
         serialize_tree();
     }
 
