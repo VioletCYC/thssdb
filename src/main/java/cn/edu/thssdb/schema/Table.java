@@ -276,5 +276,8 @@ public class Table {
         serialize_tree();
     }
 
+    public ArrayList<Column> getColumns(){
+        return columns;
+    }
 
 }

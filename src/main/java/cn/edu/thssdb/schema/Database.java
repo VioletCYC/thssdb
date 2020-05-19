@@ -138,7 +138,17 @@ public class Database {
     if(!this.tables.containsKey(table_name))
       throw new NameNotExistException(NameNotExistException.TableName);
 
-    //tables.get(table_name).insert(value);
+    try{
+      tables.get(table_name).insert(value);
+    }
+    catch (Exception e){}
+  }
+
+  public ArrayList<Column> show(String table_name){
+    if(!this.tables.containsKey(table_name))
+      throw new NameNotExistException(NameNotExistException.TableName);
+
+    return tables.get(table_name).getColumns();
   }
 
   public void delete(String table_name, LinkedList value){
