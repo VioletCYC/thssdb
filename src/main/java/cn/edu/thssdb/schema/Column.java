@@ -33,6 +33,14 @@ public class Column implements Comparable<Column>, Serializable {
     return primary != 0;
   }
 
+  public void setPrimary(int isPrimary) {
+    primary = isPrimary;
+  }
+
+  public String getName() {
+    return name;
+  }
+
   public boolean canBeNull() {
     return !notNull;
   }
