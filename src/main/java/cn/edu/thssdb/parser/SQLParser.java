@@ -1,4 +1,4 @@
-// Generated from /Users/anyanzhe/workspace/ThssDB/src/main/java/cn/edu/thssdb/parser/SQL.g4 by ANTLR 4.8
+// Generated from F:/Programming/Java/Database/大作业框架及具体要求/ThssDB/src/main/java/cn/edu/thssdb/parser\SQL.g4 by ANTLR 4.8
 package cn.edu.thssdb.parser;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -2697,13 +2697,19 @@ public class SQLParser extends Parser {
 		public Table_nameContext table_name(int i) {
 			return getRuleContext(Table_nameContext.class,i);
 		}
-		public TerminalNode K_ON() { return getToken(SQLParser.K_ON, 0); }
-		public Multiple_conditionContext multiple_condition() {
-			return getRuleContext(Multiple_conditionContext.class,0);
-		}
 		public List<TerminalNode> K_JOIN() { return getTokens(SQLParser.K_JOIN); }
 		public TerminalNode K_JOIN(int i) {
 			return getToken(SQLParser.K_JOIN, i);
+		}
+		public List<TerminalNode> K_ON() { return getTokens(SQLParser.K_ON); }
+		public TerminalNode K_ON(int i) {
+			return getToken(SQLParser.K_ON, i);
+		}
+		public List<ConditionContext> condition() {
+			return getRuleContexts(ConditionContext.class);
+		}
+		public ConditionContext condition(int i) {
+			return getRuleContext(ConditionContext.class,i);
 		}
 		public Table_queryContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -2744,7 +2750,7 @@ public class SQLParser extends Parser {
 				{
 				setState(411);
 				table_name();
-				setState(414); 
+				setState(417); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				do {
@@ -2754,16 +2760,16 @@ public class SQLParser extends Parser {
 					match(K_JOIN);
 					setState(413);
 					table_name();
+					setState(414);
+					match(K_ON);
+					setState(415);
+					condition();
 					}
 					}
-					setState(416); 
+					setState(419); 
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				} while ( _la==K_JOIN );
-				setState(418);
-				match(K_ON);
-				setState(419);
-				multiple_condition(0);
 				}
 				break;
 			}
@@ -3257,18 +3263,18 @@ public class SQLParser extends Parser {
 		"\n\34\f\34\16\34\u0169\13\34\3\35\3\35\3\35\3\35\3\36\3\36\5\36\u0171"+
 		"\n\36\3\37\3\37\3 \3 \3 \3 \3 \3 \5 \u017b\n \3 \3 \3 \3 \3 \3 \7 \u0183"+
 		"\n \f \16 \u0186\13 \3!\3!\3!\3!\3!\3!\7!\u018e\n!\f!\16!\u0191\13!\3"+
-		"!\3!\3\"\3\"\3\"\3\"\3\"\3\"\5\"\u019b\n\"\3#\3#\3#\3#\6#\u01a1\n#\r#"+
-		"\16#\u01a2\3#\3#\3#\5#\u01a8\n#\3$\3$\3%\3%\3&\3&\3&\5&\u01b1\n&\3&\3"+
-		"&\3\'\3\'\3(\3(\3)\3)\3*\3*\3+\3+\3,\3,\3,\2\4\66>-\2\4\6\b\n\f\16\20"+
-		"\22\24\26\30\32\34\36 \"$&(*,.\60\62\64\668:<>@BDFHJLNPRTV\2\b\4\2\32"+
-		"\32\"\"\3\2\b\r\3\2\20\21\3\2\16\17\7\2!!##))\63\6388\5\2..??AA\2\u01cf"+
-		"\2X\3\2\2\2\4]\3\2\2\2\6\u0085\3\2\2\2\b\u0087\3\2\2\2\n\u008b\3\2\2\2"+
-		"\f\u0093\3\2\2\2\16\u009a\3\2\2\2\20\u00a2\3\2\2\2\22\u00b4\3\2\2\2\24"+
-		"\u00b8\3\2\2\2\26\u00c6\3\2\2\2\30\u00d4\3\2\2\2\32\u00d7\3\2\2\2\34\u00de"+
-		"\3\2\2\2\36\u00e6\3\2\2\2 \u00e9\3\2\2\2\"\u00eb\3\2\2\2$\u00ef\3\2\2"+
-		"\2&\u0108\3\2\2\2(\u0113\3\2\2\2*\u012c\3\2\2\2,\u0132\3\2\2\2.\u013a"+
-		"\3\2\2\2\60\u0144\3\2\2\2\62\u0154\3\2\2\2\64\u015a\3\2\2\2\66\u015c\3"+
-		"\2\2\28\u016a\3\2\2\2:\u0170\3\2\2\2<\u0172\3\2\2\2>\u017a\3\2\2\2@\u0187"+
+		"!\3!\3\"\3\"\3\"\3\"\3\"\3\"\5\"\u019b\n\"\3#\3#\3#\3#\3#\3#\3#\6#\u01a4"+
+		"\n#\r#\16#\u01a5\5#\u01a8\n#\3$\3$\3%\3%\3&\3&\3&\5&\u01b1\n&\3&\3&\3"+
+		"\'\3\'\3(\3(\3)\3)\3*\3*\3+\3+\3,\3,\3,\2\4\66>-\2\4\6\b\n\f\16\20\22"+
+		"\24\26\30\32\34\36 \"$&(*,.\60\62\64\668:<>@BDFHJLNPRTV\2\b\4\2\32\32"+
+		"\"\"\3\2\b\r\3\2\20\21\3\2\16\17\7\2!!##))\63\6388\5\2..??AA\2\u01cf\2"+
+		"X\3\2\2\2\4]\3\2\2\2\6\u0085\3\2\2\2\b\u0087\3\2\2\2\n\u008b\3\2\2\2\f"+
+		"\u0093\3\2\2\2\16\u009a\3\2\2\2\20\u00a2\3\2\2\2\22\u00b4\3\2\2\2\24\u00b8"+
+		"\3\2\2\2\26\u00c6\3\2\2\2\30\u00d4\3\2\2\2\32\u00d7\3\2\2\2\34\u00de\3"+
+		"\2\2\2\36\u00e6\3\2\2\2 \u00e9\3\2\2\2\"\u00eb\3\2\2\2$\u00ef\3\2\2\2"+
+		"&\u0108\3\2\2\2(\u0113\3\2\2\2*\u012c\3\2\2\2,\u0132\3\2\2\2.\u013a\3"+
+		"\2\2\2\60\u0144\3\2\2\2\62\u0154\3\2\2\2\64\u015a\3\2\2\2\66\u015c\3\2"+
+		"\2\28\u016a\3\2\2\2:\u0170\3\2\2\2<\u0172\3\2\2\2>\u017a\3\2\2\2@\u0187"+
 		"\3\2\2\2B\u019a\3\2\2\2D\u01a7\3\2\2\2F\u01a9\3\2\2\2H\u01ab\3\2\2\2J"+
 		"\u01b0\3\2\2\2L\u01b4\3\2\2\2N\u01b6\3\2\2\2P\u01b8\3\2\2\2R\u01ba\3\2"+
 		"\2\2T\u01bc\3\2\2\2V\u01be\3\2\2\2XY\5\4\3\2Y\3\3\2\2\2Z\\\7\3\2\2[Z\3"+
@@ -3370,10 +3376,10 @@ public class SQLParser extends Parser {
 		"A\3\2\2\2\u0194\u019b\7\20\2\2\u0195\u0196\5N(\2\u0196\u0197\7\7\2\2\u0197"+
 		"\u0198\7\20\2\2\u0198\u019b\3\2\2\2\u0199\u019b\5J&\2\u019a\u0194\3\2"+
 		"\2\2\u019a\u0195\3\2\2\2\u019a\u0199\3\2\2\2\u019bC\3\2\2\2\u019c\u01a8"+
-		"\5N(\2\u019d\u01a0\5N(\2\u019e\u019f\7+\2\2\u019f\u01a1\5N(\2\u01a0\u019e"+
-		"\3\2\2\2\u01a1\u01a2\3\2\2\2\u01a2\u01a0\3\2\2\2\u01a2\u01a3\3\2\2\2\u01a3"+
-		"\u01a4\3\2\2\2\u01a4\u01a5\7/\2\2\u01a5\u01a6\5\66\34\2\u01a6\u01a8\3"+
-		"\2\2\2\u01a7\u019c\3\2\2\2\u01a7\u019d\3\2\2\2\u01a8E\3\2\2\2\u01a9\u01aa"+
+		"\5N(\2\u019d\u01a3\5N(\2\u019e\u019f\7+\2\2\u019f\u01a0\5N(\2\u01a0\u01a1"+
+		"\7/\2\2\u01a1\u01a2\58\35\2\u01a2\u01a4\3\2\2\2\u01a3\u019e\3\2\2\2\u01a4"+
+		"\u01a5\3\2\2\2\u01a5\u01a3\3\2\2\2\u01a5\u01a6\3\2\2\2\u01a6\u01a8\3\2"+
+		"\2\2\u01a7\u019c\3\2\2\2\u01a7\u019d\3\2\2\2\u01a8E\3\2\2\2\u01a9\u01aa"+
 		"\t\6\2\2\u01aaG\3\2\2\2\u01ab\u01ac\t\7\2\2\u01acI\3\2\2\2\u01ad\u01ae"+
 		"\5N(\2\u01ae\u01af\7\7\2\2\u01af\u01b1\3\2\2\2\u01b0\u01ad\3\2\2\2\u01b0"+
 		"\u01b1\3\2\2\2\u01b1\u01b2\3\2\2\2\u01b2\u01b3\5R*\2\u01b3K\3\2\2\2\u01b4"+
@@ -3382,7 +3388,7 @@ public class SQLParser extends Parser {
 		">\2\2\u01bdU\3\2\2\2\u01be\u01bf\7A\2\2\u01bfW\3\2\2\2\']dio\u0085\u008f"+
 		"\u009e\u00ab\u00b0\u00be\u00cc\u00dc\u00e2\u00f8\u00fd\u0105\u010e\u0115"+
 		"\u011c\u0125\u012a\u0136\u0142\u0149\u0154\u015a\u0165\u0167\u0170\u017a"+
-		"\u0182\u0184\u018f\u019a\u01a2\u01a7\u01b0";
+		"\u0182\u0184\u018f\u019a\u01a5\u01a7\u01b0";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {
