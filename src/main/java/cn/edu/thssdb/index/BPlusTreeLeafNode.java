@@ -71,6 +71,11 @@ public class BPlusTreeLeafNode<K extends Comparable<K>, V> extends BPlusTreeNode
   }
 
   @Override
+  ArrayList<K> getAllKeys() {
+    return keys;
+  }
+
+  @Override
   BPlusTreeNode split() {
     int from = (size() + 1) / 2;
     int to = size();

@@ -8,6 +8,7 @@ import cn.edu.thssdb.utils.mNumber;
 import javafx.util.Pair;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.io.File;
@@ -246,6 +247,18 @@ public class Table {
         }
         return key;
     }
+
+    //获取所有数据
+    public ArrayList<Row> getAllRows()
+            throws SearchException, IOException {
+        ArrayList<Entry> allKeys = index.getAllKeys();
+        ArrayList<Row> allRows = new ArrayList<>();
+        for(Entry key: allKeys) {
+            allRows.add(getRowFromFile(key));
+        }
+        return allRows;
+    }
+
 
 //    private class TableIterator implements Iterator<Integer> {
 //        private Iterator<Pair<Entry, ArrayList<Integer>>> iterator;
