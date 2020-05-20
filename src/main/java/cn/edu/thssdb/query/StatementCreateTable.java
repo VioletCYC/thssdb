@@ -18,11 +18,13 @@ public class StatementCreateTable {
     }
 
     //execute create table
-    public void exec(Database db){
+    public ExecResult exec(Database db){
         if(db == null)
             throw new NullPointerException(NullPointerException.Database);
 
         db.create(table_name, cols);
+        ExecResult res = new ExecResult("Create 1 table");
+        return res;
     }
 }
 

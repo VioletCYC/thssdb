@@ -11,11 +11,13 @@ public class StatementDropTable {
     }
 
     //execute drop table
-    public void Exec(Database db){
+    public ExecResult Exec(Database db){
         if(db == null)
             throw new NullPointerException(NullPointerException.Database);
 
         db.drop(table_name);
+
+        return new ExecResult("Drop 1 table");
     }
 }
 

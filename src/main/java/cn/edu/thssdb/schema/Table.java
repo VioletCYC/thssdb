@@ -3,6 +3,7 @@ package cn.edu.thssdb.schema;
 import cn.edu.thssdb.exception.InsertException;
 import cn.edu.thssdb.exception.SearchException;
 import cn.edu.thssdb.index.BPlusTree;
+import cn.edu.thssdb.query.Conditions;
 import cn.edu.thssdb.type.ColumnType;
 import cn.edu.thssdb.utils.mNumber;
 import javafx.util.Pair;
@@ -295,6 +296,7 @@ public class Table {
 
     public String getTableName(){return tableName;}
 
+    //返回列名字的list
     public ArrayList<String> getColNames(){
         ArrayList<String> colName = new ArrayList<>();
         for(Column col:columns){
@@ -302,4 +304,58 @@ public class Table {
         }
         return colName;
     }
+
+    public ArrayList<Long> search(Conditions cond) throws IOException, NDException {
+        if (cond == null)
+            return getAllRows();
+
+        if (this.primaryKey != -1) {
+            String primary = this.tableName + "." + this.colNames.get(this.primaryKey);
+            // index = x
+            if (cond.isSymbolEqualSomething(primary)) {
+                Object obj = cond.getEqualValue().getKey();
+                Object key = Type.convert(obj, this.colTypes.get(this.primaryKey));
+                return new ArrayList<>(this.index.search(key));
+            } else
+                // index ∈ (-∞, x) / (-∞, x]
+                if (cond.isLowerBounded(primary)) {
+                    Pair<Pair<Object, Type>, Boolean> lower = cond.getBoundValue();
+                    boolean isOpen = lower.getValue();
+                    Object obj = lower.getKey().getKey();
+                    Object key = Type.convert(obj, this.colTypes.get(this.primaryKey));
+                    return new ArrayList<>(this.index.search(key, isOpen ? "GT" : "NLT"));
+                } else
+                    // index ∈ (x, +∞) / [x, +∞)
+                    if (cond.isUpperBounded(primary)) {
+                        Pair<Pair<Object, Type>, Boolean> upper = cond.getBoundValue();
+                        boolean isOpen = upper.getValue();
+                        Object obj = upper.getKey().getKey();
+                        Object key = Type.convert(obj, this.colTypes.get(this.primaryKey));
+                        return new ArrayList<>(this.index.search(key, isOpen ? "LT" : "NGT"));
+                    } else
+                        // index ∈ (/[x, y)/]
+                        if (cond.isRanged(primary)) {
+                            Pair<Pair<Pair<Object, Type>, Boolean>, Pair<Pair<Object, Type>, Boolean>> range = cond.getRange();
+                            Pair<Pair<Object, Type>, Boolean> lower = range.getKey();
+                            Pair<Pair<Object, Type>, Boolean> upper = range.getValue();
+                            boolean lowerOpen = lower.getValue();
+                            boolean upperOpen = upper.getValue();
+                            Object lowerKey = Type.convert(lower.getKey().getKey(), this.colTypes.get(this.primaryKey));
+                            Object upperKey = Type.convert(upper.getKey().getKey(), this.colTypes.get(this.primaryKey));
+                            return new ArrayList<>(this.index.search(lowerKey, !lowerOpen, upperKey, !upperOpen));
+                        }
+        }
+        // bad implementation
+        ArrayList<Long> res = new ArrayList<>();
+        ArrayList<Long> allRow = this.persistence.getAllRowNum();
+        LinkedList<String> colNames = this.combineTableColumn();
+        for (long row: allRow) {
+            if (cond.satisfied(colNames,
+                    new LinkedList<Type>(this.colTypes),
+                    this.persistence.get(row)))
+                res.add(row);
+        }
+        return res;
+    }
+
 }

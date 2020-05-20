@@ -1,7 +1,12 @@
 package cn.edu.thssdb.query;
 
+import cn.edu.thssdb.schema.Column;
 import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.exception.NullPointerException;
+import cn.edu.thssdb.type.ColumnType;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class StatementShowTable {
     private String table_name;
@@ -10,10 +15,18 @@ public class StatementShowTable {
         this.table_name = table_name;
     }
 
-    public void exec(Database db){
+    public ExecResult exec(Database db){
         if(db == null)
             throw new NullPointerException(NullPointerException.Database);
 
+        ArrayList<Column> cols = db.show(table_name);
+        LinkedList<String> colName = new LinkedList<>();
+        LinkedList<ColumnType> typeList = new LinkedList<>();
+        for(Column col: cols){
+            colName.add(col.getName());
+            typeList.add(col.getType());
+        }
 
+        return new ExecResult(colName, typeList, "Show all Columns");
     }
 }

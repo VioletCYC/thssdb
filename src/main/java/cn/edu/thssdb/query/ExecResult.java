@@ -3,6 +3,7 @@ package cn.edu.thssdb.query;
 
 import cn.edu.thssdb.exception.NameNotExistException;
 import cn.edu.thssdb.schema.Table;
+import cn.edu.thssdb.type.ColumnType;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -10,18 +11,26 @@ import java.util.function.Consumer;
 
 public class ExecResult {
     private LinkedList<String> colNames;
+    private LinkedList<ColumnType> typeList;
     private LinkedList<LinkedList> dataList;
     private String msg;
     private int type;
 
     //for  insert, update, delete, createTable, dropTable
     public ExecResult(String msg) {
-        //this.colNames = new LinkedList<>();
-        //this.dataList = new LinkedList<>();
+        this.colNames = new LinkedList<>();
+        this.dataList = new LinkedList<>();
         this.msg = msg;
     }
 
-    //for  showTable, select
+    //for  showTable
+    public ExecResult(LinkedList<String> colNames, LinkedList<ColumnType> typeList, String msg) {
+        this.colNames = new LinkedList<>(colNames);
+        this.typeList = new LinkedList<>(typeList);
+        this.msg = msg;
+    }
+
+    //for  select
     public ExecResult(LinkedList<String> colNames) {
         this.colNames = new LinkedList<>(colNames);
         this.dataList = new LinkedList<>();
