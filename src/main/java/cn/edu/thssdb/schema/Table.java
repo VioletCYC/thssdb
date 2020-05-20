@@ -293,4 +293,13 @@ public class Table {
         return columns;
     }
 
+    public String getTableName(){return tableName;}
+
+    public ArrayList<String> getColNames(){
+        ArrayList<String> colName = new ArrayList<>();
+        for(Column col:columns){
+            colName.add(col.getName());
+        }
+        return colName;
+    }
 }

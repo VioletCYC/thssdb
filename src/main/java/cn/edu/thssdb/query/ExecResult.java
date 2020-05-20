@@ -1,6 +1,9 @@
 package cn.edu.thssdb.query;
 
 
+import cn.edu.thssdb.exception.NameNotExistException;
+import cn.edu.thssdb.schema.Table;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.function.Consumer;
@@ -11,19 +14,20 @@ public class ExecResult {
     private String msg;
     private int type;
 
-    //for insert, delete, createtable, droptable, update
+    //for  insert, update, delete, createTable, dropTable
     public ExecResult(String msg) {
+        //this.colNames = new LinkedList<>();
+        //this.dataList = new LinkedList<>();
         this.msg = msg;
-        this.type = 1;
     }
 
-    //for showtable(type=2), select(type=3)
-    public ExecResult(int type, LinkedList<String> colNames) {
+    //for  showTable, select
+    public ExecResult(LinkedList<String> colNames) {
         this.colNames = new LinkedList<>(colNames);
         this.dataList = new LinkedList<>();
     }
 
-/*
+    //for  select
     public ExecResult(LinkedList<String> colNames, LinkedList<String> ignoreNames) {
         this.colNames = new LinkedList<>(colNames);
         for (String ignoreName: ignoreNames) {
@@ -32,7 +36,7 @@ public class ExecResult {
         this.dataList = new LinkedList<>();
     }
 
-    public void insert(LinkedList<String> allNames, LinkedList curData, LinkedList<String> ignoreNames) throws NDException {
+    public void insert(LinkedList<String> allNames, LinkedList curData, LinkedList<String> ignoreNames){
         LinkedList data = new LinkedList<>();
         int n = allNames.size();
         for (int i = 0; i < n; ++i) {
@@ -42,7 +46,7 @@ public class ExecResult {
         dataList.add(data);
     }
 
-    public void insert(LinkedList<String> curNames, LinkedList curData, ArrayList<Table> tableList, LinkedList<String> ignoreNames) throws NDException {
+    public void insert(LinkedList<String> curNames, LinkedList curData, ArrayList<Table> tableList, LinkedList<String> ignoreNames) {
         LinkedList data = new LinkedList();
         for (String colName: this.colNames) {
             Expression tmp = new Expression(1, colName);
@@ -50,7 +54,7 @@ public class ExecResult {
             String tableCol = tmp.getSymbol();
             int idx = curNames.indexOf(tableCol);
             if (idx < 0) {
-                throw new NDException("Unknown column name: '" + colName + "'");
+                throw new NameNotExistException(NameNotExistException.ColumnName);
             }
             data.add(curData.get(idx));
         }
@@ -112,5 +116,5 @@ public class ExecResult {
 
     public LinkedList<LinkedList> getDataList() {
         return dataList;
-    }*/
+    }
 }

@@ -6,16 +6,10 @@ import cn.edu.thssdb.query.Expression;
 import cn.edu.thssdb.schema.Column;
 import cn.edu.thssdb.type.ColumnType;
 import cn.edu.thssdb.utils.mNumber;
-import cn.edu.thssdb.query.RangeVariable;
 import javafx.util.Pair;
-import org.w3c.dom.ranges.Range;
-import sun.reflect.annotation.ExceptionProxy;
 
-import javax.swing.plaf.nimbus.State;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.concurrent.locks.Condition;
 
 public class MyVisitor extends SQLBaseVisitor {
     public MyVisitor() {

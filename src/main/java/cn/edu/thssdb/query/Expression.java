@@ -362,7 +362,7 @@ public class Expression {
         normalize(tables, null);
     }
 
-    public int getColumnType() {return this.TypeNum;}
+    public int getType() {return this.TypeNum;}
     public ColumnType getValueColumnType() {return this.valueColumnType;}
 
     //负号处理

@@ -3,11 +3,9 @@ package cn.edu.thssdb.query;
 import cn.edu.thssdb.exception.GrammarException;
 import cn.edu.thssdb.exception.TypeErrorException;
 import cn.edu.thssdb.schema.Column;
+import cn.edu.thssdb.schema.Table;
 import cn.edu.thssdb.type.ColumnType;
-import org.naivedb.Table.Table;
-import org.naivedb.Type.Type;
-import org.naivedb.utils.NDException;
-import org.naivedb.utils.NumberUtils;
+
 
 import javafx.util.Pair;
 
@@ -68,7 +66,7 @@ public class Conditions {
                 Pair<Object, ColumnType> tmp2 = expr2.calcValue(nameList, typeList, valueList);
                 ColumnType finalType = ColumnType.lift(tmp1.getValue(), tmp2.getValue());
                 try {
-                    if (finalType.getType() == 5) {
+                    if (finalType == ColumnType.STRING) {
                         return check(tmp1.getKey(), tmp2.getKey(), this.op, finalType);
                     }
                     Object obj1 = ColumnType.convert(tmp1.getKey(), finalType);
@@ -350,9 +348,6 @@ public class Conditions {
         return getTwoTableColumns2(tbNames1, tbNames2);
     }
 
-    private boolean isValue(String s) {
-        return NumberUtils.isNumber(s) || (s.startsWith("\"") && s.endsWith("\""));
-    }
 
     private boolean check(Object obj1, Object obj2, String expectedRelation, ColumnType type) {
         int comp = ColumnType.compare(obj1, obj2, type);
