@@ -49,5 +49,4 @@ public class Column implements Comparable<Column>, Serializable {
     return name + ',' + type + ',' + primary + ',' + notNull + ',' + maxLength;
   }
 
-  public String getName(){ return name;}
 }

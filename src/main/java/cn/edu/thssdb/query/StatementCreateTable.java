@@ -17,6 +17,7 @@ public class StatementCreateTable {
         this.cols = cols;
     }
 
+    //execute create table
     public void exec(Database db){
         if(db == null)
             throw new NullPointerException(NullPointerException.Database);

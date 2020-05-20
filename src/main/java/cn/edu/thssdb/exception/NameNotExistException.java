@@ -8,6 +8,7 @@ public class NameNotExistException extends RuntimeException {
     public static int TableName = 1;
     public static int DatabaseName = 2;
     public static int ColumnName = 3;
+    public static int Expression = 4;
 
     public NameNotExistException(int type){errorType = type;}
 
@@ -20,6 +21,8 @@ public class NameNotExistException extends RuntimeException {
             msg = "Exception: database name does not exist!";
         else if(errorType == ColumnName)
             msg = "Exception: column name does not exist!";
+        else if(errorType == Expression)
+            msg = "Exception: parser error!";
         return msg;
     }
 }

@@ -10,6 +10,7 @@ public class StatementDropTable {
         this.table_name = table_name;
     }
 
+    //execute drop table
     public void Exec(Database db){
         if(db == null)
             throw new NullPointerException(NullPointerException.Database);

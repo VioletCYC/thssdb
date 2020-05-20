@@ -9,17 +9,21 @@ public class ExecResult {
     private LinkedList<String> colNames;
     private LinkedList<LinkedList> dataList;
     private String msg;
+    private int type;
 
-    public ExecResult() {
-        this.colNames = new LinkedList<>();
-        this.dataList = new LinkedList<>();
+    //for insert, delete, createtable, droptable, update
+    public ExecResult(String msg) {
+        this.msg = msg;
+        this.type = 1;
     }
 
-    public ExecResult(LinkedList<String> colNames) {
+    //for showtable(type=2), select(type=3)
+    public ExecResult(int type, LinkedList<String> colNames) {
         this.colNames = new LinkedList<>(colNames);
         this.dataList = new LinkedList<>();
     }
 
+/*
     public ExecResult(LinkedList<String> colNames, LinkedList<String> ignoreNames) {
         this.colNames = new LinkedList<>(colNames);
         for (String ignoreName: ignoreNames) {
@@ -27,7 +31,7 @@ public class ExecResult {
         }
         this.dataList = new LinkedList<>();
     }
-/*
+
     public void insert(LinkedList<String> allNames, LinkedList curData, LinkedList<String> ignoreNames) throws NDException {
         LinkedList data = new LinkedList<>();
         int n = allNames.size();
