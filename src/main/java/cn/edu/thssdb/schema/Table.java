@@ -1,23 +1,16 @@
 package cn.edu.thssdb.schema;
 
 import cn.edu.thssdb.exception.InsertException;
+import cn.edu.thssdb.exception.NDException;
 import cn.edu.thssdb.exception.SearchException;
 import cn.edu.thssdb.index.BPlusTree;
+import cn.edu.thssdb.query.Conditions;
 import cn.edu.thssdb.type.ColumnType;
 import cn.edu.thssdb.utils.mNumber;
-import javafx.util.Pair;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 
 
 //public class Table implements Iterable<Long> {
@@ -34,7 +27,12 @@ public class Table {
     public int lastBytePos = 0;
     private RandomAccessFile dataFile;
     private int primaryIndex;
+    private ArrayList<String> colNames;
+    private ArrayList<ColumnType> colTypes;
 
+    public ArrayList<ColumnType> getColTypes() {
+        return this.colTypes;
+    }
     public Table(String databaseName, String tableName, Column[] columns)
             throws IOException, ClassNotFoundException {
         //TODO: 这几行之后应该挪到Manager里面
@@ -58,6 +56,7 @@ public class Table {
         this.databaseName = databaseName;
         this.tableName = tableName;
         this.columns = new ArrayList<Column>();
+        this.colNames = new ArrayList<String>();
         Collections.addAll(this.columns, columns);
 
         //计算记录的最大长度
@@ -165,9 +164,9 @@ public class Table {
     public Row getRowFromFile(Entry key)
             throws SearchException, IOException {
 
-        ArrayList<Integer> storePos = index.get(key);
-        int offset = storePos.get(0);   //文件起始位置
-        int length = storePos.get(1);   //读入的字节数（记录长度）
+        LinkedList storePos = index.get(key);
+        int offset = (int) storePos.get(0);   //文件起始位置
+        int length = (int) storePos.get(1);   //读入的字节数（记录长度）
         byte[] buffer = new byte[length];
         dataFile.seek(offset);
         dataFile.read(buffer, 0, length);
@@ -187,6 +186,24 @@ public class Table {
         return newRow;
     }
 
+    public LinkedList getRowAsList(Entry key)
+            throws SearchException, IOException {
+
+        LinkedList storePos = index.get(key);
+        int offset = (int) storePos.get(0);   //文件起始位置
+        int length = (int) storePos.get(1);   //读入的字节数（记录长度）
+        byte[] buffer = new byte[length];
+        dataFile.seek(offset);
+        dataFile.read(buffer, 0, length);
+
+        LinkedList row = new LinkedList();
+
+        int pos = 0;
+        for (int i = 0; i < columns.size(); ++i) {
+            pos += mNumber.fromBytes(row, buffer, pos, columns.get(i).getType());
+        }
+        return row;
+    }
     //字段合法性检查
     private void legalCheck(LinkedList values) {
         // 列数
@@ -302,4 +319,31 @@ public class Table {
         }
         return colName;
     }
+    
+    public LinkedList<String> combineTableColumn() {
+        LinkedList<String> list = new LinkedList<>();
+        for (String colName: this.colNames)
+            list.add(this.tableName + "." + colName);
+        return list;
+    }
+
+    public ArrayList<Entry> getAllRowsKey() throws SearchException, IOException {
+        ArrayList<Entry> allKeys = index.getAllKeys();
+
+        return allKeys;
+    }
+    public ArrayList<Entry> search(Conditions cond) throws IOException, NDException {
+        if (cond == null) return getAllRowsKey();
+        ArrayList<Entry> res = new ArrayList<>();
+        ArrayList<Entry> allRow = this.getAllRowsKey();
+        for (Entry key: allRow) {
+            if (cond.satisfied(new LinkedList<String>(this.colNames),
+                    new LinkedList<ColumnType>(this.colTypes),
+                    getRowAsList(key)))
+                res.add(key);
+        }
+        return res;
+    }
+
+
 }

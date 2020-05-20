@@ -1,14 +1,17 @@
 package cn.edu.thssdb.schema;
 
 import cn.edu.thssdb.exception.FileException;
+import cn.edu.thssdb.exception.NDException;
 import cn.edu.thssdb.exception.NameAlreadyExistException;
 import cn.edu.thssdb.exception.NameNotExistException;
 import cn.edu.thssdb.query.QueryResult;
 import cn.edu.thssdb.query.QueryTable;
-import sun.rmi.runtime.Log;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Database {
@@ -168,6 +171,13 @@ public class Database {
   public String select(QueryTable[] queryTables) {
     // TODO
     QueryResult queryResult = new QueryResult(queryTables);
+    return null;
+  }
+
+  public Table getTable(String table_name) throws IOException, NDException {
+    if (!this.tables.containsKey(table_name)) throw new NameNotExistException(NameNotExistException.TableName);
+    if (this.tables.containsKey(table_name))
+      return this.tables.get(table_name);
     return null;
   }
 }
