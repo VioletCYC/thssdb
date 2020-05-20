@@ -3,6 +3,7 @@ package cn.edu.thssdb.index;
 import cn.edu.thssdb.utils.Global;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -19,6 +20,8 @@ abstract class BPlusTreeNode<K extends Comparable<K>, V> implements Serializable
   abstract boolean containsKey(K key);
 
   abstract K getFirstLeafKey();
+
+  abstract ArrayList<K> getAllKeys();
 
   abstract BPlusTreeNode<K, V> split();
 

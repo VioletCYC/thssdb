@@ -1,9 +1,12 @@
 package cn.edu.thssdb.index;
 
+import cn.edu.thssdb.schema.Row;
 import javafx.util.Pair;
 import org.apache.thrift.TSerializable;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.LinkedList;
 
 public final class BPlusTree<K extends Comparable<K>, V> implements Iterable<Pair<K, V>>, Serializable {
 
@@ -47,6 +50,10 @@ public final class BPlusTree<K extends Comparable<K>, V> implements Iterable<Pai
   public boolean contains(K key) {
     if (key == null) throw new IllegalArgumentException("argument key to contains() is null");
     return root.containsKey(key);
+  }
+
+  public ArrayList<K> getAllKeys() {
+    return root.getAllKeys();
   }
 
   private void checkRoot() {
