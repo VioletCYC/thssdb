@@ -1,8 +1,6 @@
 package cn.edu.thssdb.query;
 
 import cn.edu.thssdb.exception.GrammarException;
-import cn.edu.thssdb.exception.TypeErrorException;
-import cn.edu.thssdb.schema.Column;
 import cn.edu.thssdb.schema.Table;
 import cn.edu.thssdb.type.ColumnType;
 
@@ -25,9 +23,9 @@ public class Conditions {
      */
     // for type 0 or 1
     public Conditions(int type, Conditions leftCond, Conditions rightCond)
-            throws TypeErrorException {
+            throws GrammarException {
         if (type != 0 && type != 1) {
-            throw new TypeErrorException("nouse", TypeErrorException.Conditions);
+            throw new GrammarException("Exception: it is not a basic type for conditions");
         }
         this.type = type;
         this.leftCond = leftCond;
@@ -36,9 +34,9 @@ public class Conditions {
 
     // for type 2
     public Conditions(int type, String op, Expression expr1, Expression expr2)
-            throws TypeErrorException {
+            throws GrammarException {
         if (type != 2) {
-            throw new TypeErrorException("nouse", TypeErrorException.Conditions);
+            throw new GrammarException("Exception: it is not a basic type for conditions");
         }
         this.type = type;
         this.expr1 = expr1;

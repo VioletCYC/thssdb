@@ -1,6 +1,7 @@
 package cn.edu.thssdb.parser;
 
 import cn.edu.thssdb.exception.StatementException;
+import cn.edu.thssdb.exception.NDException;
 import cn.edu.thssdb.query.Conditions;
 import cn.edu.thssdb.query.Expression;
 import cn.edu.thssdb.schema.Column;
@@ -155,8 +156,8 @@ public class MyVisitor extends SQLBaseVisitor {
                 v = expr.getDirectValue();
                 values.add(v.getKey());
             }
-        } catch (NDException e) {
-            throw new Exception(e);
+        } catch (Exception e) {
+            throw new NDException("error");  //change
         }
         return values;
     }

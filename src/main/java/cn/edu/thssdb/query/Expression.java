@@ -2,9 +2,6 @@ package cn.edu.thssdb.query;
 
 
 import cn.edu.thssdb.exception.GrammarException;
-import cn.edu.thssdb.exception.NameNotExistException;
-import cn.edu.thssdb.exception.TypeErrorException;
-import cn.edu.thssdb.schema.Column;
 import cn.edu.thssdb.schema.Table;
 import cn.edu.thssdb.type.ColumnType;
 import javafx.util.Pair;
@@ -27,14 +24,14 @@ public class Expression {
     private Expression expr1, expr2;
     private String op; // +, -, *, /, %, ~, not
 
-    public Expression(int TypeNum, String symbolORvalue) throws TypeErrorException {
+    public Expression(int TypeNum, String symbolORvalue) throws GrammarException {
         if (TypeNum != 0 && TypeNum != 1 && TypeNum != 4)
-            throw new TypeErrorException("Notuse", TypeErrorException.Expression);
+            throw new GrammarException("Exception: it is not a basic type");
 
         this.TypeNum = TypeNum;
         if (TypeNum == 0) {
             if (!isNumeric(symbolORvalue)) {
-                throw new TypeErrorException(symbolORvalue, TypeErrorException.NotNumber);
+                throw new GrammarException("Exception: " + symbolORvalue + "is not a number");
             }
             this.symbolORValue = symbolORvalue;
             if (isInteger(symbolORValue)) {
@@ -59,9 +56,9 @@ public class Expression {
         }
     }
 
-    public Expression(int TypeNum, String unary_op, Expression expr) throws TypeErrorException  {
+    public Expression(int TypeNum, String unary_op, Expression expr) throws GrammarException  {
         if (TypeNum != 2) {
-            throw new TypeErrorException("nouse", TypeErrorException.Expression);
+            throw new GrammarException("Exception: it is not a basic type");
         }
 //        if (expr.getColumnType() == 0) {
 //            this.ColumnType = 0;
@@ -91,9 +88,9 @@ public class Expression {
     }
 
     public Expression(int TypeNum, String op, Expression expr1, Expression expr2)
-            throws TypeErrorException {
+            throws GrammarException {
         if (TypeNum != 3) {
-            throw new TypeErrorException("nouse", TypeErrorException.Expression);
+            throw new GrammarException("Exception: it is not type for expression");
         }
         this.TypeNum = TypeNum;
         this.op = op;

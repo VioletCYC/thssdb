@@ -1,7 +1,6 @@
 package cn.edu.thssdb.type;
 
 import cn.edu.thssdb.exception.InsertException;
-import cn.edu.thssdb.exception.TypeErrorException;
 
 public enum ColumnType {
   INT, LONG, FLOAT, DOUBLE, STRING;
