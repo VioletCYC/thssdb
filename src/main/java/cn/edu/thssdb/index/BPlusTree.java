@@ -1,8 +1,6 @@
 package cn.edu.thssdb.index;
 
-import cn.edu.thssdb.schema.Row;
 import javafx.util.Pair;
-import org.apache.thrift.TSerializable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,7 +19,7 @@ public final class BPlusTree<K extends Comparable<K>, V> implements Iterable<Pai
     return size;
   }
 
-  public V get(K key) {
+  public LinkedList get(K key) {
     if (key == null) throw new IllegalArgumentException("argument key to get() is null");
     return root.get(key);
   }

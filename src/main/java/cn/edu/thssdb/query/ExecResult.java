@@ -7,7 +7,6 @@ import cn.edu.thssdb.type.ColumnType;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.function.Consumer;
 
 public class ExecResult {
     private LinkedList<String> colNames;
@@ -16,6 +15,10 @@ public class ExecResult {
     private String msg;
     private int type;
 
+    public ExecResult() {
+        this.colNames = new LinkedList<>();
+        this.dataList = new LinkedList<>();
+    }
     //for  insert, update, delete, createTable, dropTable
     public ExecResult(String msg) {
         this.colNames = new LinkedList<>();
@@ -44,6 +47,7 @@ public class ExecResult {
         }
         this.dataList = new LinkedList<>();
     }
+
 
     public void insert(LinkedList<String> allNames, LinkedList curData, LinkedList<String> ignoreNames){
         LinkedList data = new LinkedList<>();

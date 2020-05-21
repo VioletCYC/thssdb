@@ -23,8 +23,7 @@ public class StatementCreateTable {
             throw new NullPointerException(NullPointerException.Database);
 
         db.create(table_name, cols);
-        ExecResult res = new ExecResult("Create 1 table");
-        return res;
+        return new ExecResult("Create 1 table");
     }
 }
 

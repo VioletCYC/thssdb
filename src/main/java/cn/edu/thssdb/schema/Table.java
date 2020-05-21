@@ -1,24 +1,18 @@
 package cn.edu.thssdb.schema;
 
 import cn.edu.thssdb.exception.InsertException;
+import cn.edu.thssdb.exception.NDException;
 import cn.edu.thssdb.exception.SearchException;
 import cn.edu.thssdb.index.BPlusTree;
 import cn.edu.thssdb.query.Conditions;
+import cn.edu.thssdb.query.Expression;
 import cn.edu.thssdb.type.ColumnType;
 import cn.edu.thssdb.utils.mNumber;
 import javafx.util.Pair;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 
 
 //public class Table implements Iterable<Long> {
@@ -35,7 +29,12 @@ public class Table {
     public int lastBytePos = 0;
     private RandomAccessFile dataFile;
     private int primaryIndex;
+    private ArrayList<String> colNames;
+    private ArrayList<ColumnType> colTypes;
 
+    public ArrayList<ColumnType> getColTypes() {
+        return this.colTypes;
+    }
     public Table(String databaseName, String tableName, Column[] columns)
             throws IOException, ClassNotFoundException {
         //TODO: 这几行之后应该挪到Manager里面
@@ -59,13 +58,17 @@ public class Table {
         this.databaseName = databaseName;
         this.tableName = tableName;
         this.columns = new ArrayList<Column>();
+        this.colNames = new ArrayList<String>();
         Collections.addAll(this.columns, columns);
 
         //计算记录的最大长度
         maxRowSize = 0;
         for (Column col : columns) {
             maxRowSize = maxRowSize + mNumber.byteOfType(col.getType());
+            colTypes.add(col.getType());     //debug，这两行是否需要加？
+            colNames.add(col.getName());
         }
+
     }
 
     private void recover() {
@@ -95,16 +98,31 @@ public class Table {
     }
 
 
-    public void delete(LinkedList values) {
+    public void delete(Entry key) {
         //TODO: 合法性检查（是不是在查询时已经保证了？）
-        Entry key = getKey(values);
         index.remove(key);
     }
 
-    public void update(LinkedList old_values, LinkedList new_values)
+    public void update(Entry key, LinkedList<String> colList, LinkedList<Expression> exprList)
             throws InsertException, IOException {
-        delete(old_values);
-        insert(new_values);
+        //delete(old_values);
+        //insert(new_values);
+
+        LinkedList oldData = getRowAsList(key);
+        LinkedList newData = new LinkedList(oldData);
+        LinkedList<String> nameList = this.combineTableColumn();
+        LinkedList<ColumnType> typeList = new LinkedList<ColumnType>(colTypes);
+        int n = colList.size();
+        for (int i = 0; i < n; ++i) {
+            Pair<Object, ColumnType> val = exprList.get(i).calcValue(nameList, typeList, oldData);
+            int idx = this.colNames.indexOf(colList.get(i));
+            Object newVal = ColumnType.convert(val.getKey(), this.colTypes.get(idx));
+            newData.set(idx, newVal);
+        }
+
+        delete(key);
+        insert(newData);
+
     }
 
     private ArrayList<Integer> serialize_row(Row row)
@@ -166,9 +184,9 @@ public class Table {
     public Row getRowFromFile(Entry key)
             throws SearchException, IOException {
 
-        ArrayList<Integer> storePos = index.get(key);
-        int offset = storePos.get(0);   //文件起始位置
-        int length = storePos.get(1);   //读入的字节数（记录长度）
+        LinkedList storePos = index.get(key);
+        int offset = (int) storePos.get(0);   //文件起始位置
+        int length = (int) storePos.get(1);   //读入的字节数（记录长度）
         byte[] buffer = new byte[length];
         dataFile.seek(offset);
         dataFile.read(buffer, 0, length);
@@ -188,6 +206,24 @@ public class Table {
         return newRow;
     }
 
+    public LinkedList getRowAsList(Entry key)
+            throws SearchException, IOException {
+
+        LinkedList storePos = index.get(key);
+        int offset = (int) storePos.get(0);   //文件起始位置
+        int length = (int) storePos.get(1);   //读入的字节数（记录长度）
+        byte[] buffer = new byte[length];
+        dataFile.seek(offset);
+        dataFile.read(buffer, 0, length);
+
+        LinkedList row = new LinkedList();
+
+        int pos = 0;
+        for (int i = 0; i < columns.size(); ++i) {
+            pos += mNumber.fromBytes(row, buffer, pos, columns.get(i).getType());
+        }
+        return row;
+    }
     //字段合法性检查
     private void legalCheck(LinkedList values) {
         // 列数
@@ -305,57 +341,30 @@ public class Table {
         return colName;
     }
 
-    public ArrayList<Long> search(Conditions cond) throws IOException, NDException {
-        if (cond == null)
-            return getAllRows();
+    public LinkedList<String> combineTableColumn() {
+        LinkedList<String> list = new LinkedList<>();
+        for (String colName: this.colNames)
+            list.add(this.tableName + "." + colName);
+        return list;
+    }
 
-        if (this.primaryKey != -1) {
-            String primary = this.tableName + "." + this.colNames.get(this.primaryKey);
-            // index = x
-            if (cond.isSymbolEqualSomething(primary)) {
-                Object obj = cond.getEqualValue().getKey();
-                Object key = Type.convert(obj, this.colTypes.get(this.primaryKey));
-                return new ArrayList<>(this.index.search(key));
-            } else
-                // index ∈ (-∞, x) / (-∞, x]
-                if (cond.isLowerBounded(primary)) {
-                    Pair<Pair<Object, Type>, Boolean> lower = cond.getBoundValue();
-                    boolean isOpen = lower.getValue();
-                    Object obj = lower.getKey().getKey();
-                    Object key = Type.convert(obj, this.colTypes.get(this.primaryKey));
-                    return new ArrayList<>(this.index.search(key, isOpen ? "GT" : "NLT"));
-                } else
-                    // index ∈ (x, +∞) / [x, +∞)
-                    if (cond.isUpperBounded(primary)) {
-                        Pair<Pair<Object, Type>, Boolean> upper = cond.getBoundValue();
-                        boolean isOpen = upper.getValue();
-                        Object obj = upper.getKey().getKey();
-                        Object key = Type.convert(obj, this.colTypes.get(this.primaryKey));
-                        return new ArrayList<>(this.index.search(key, isOpen ? "LT" : "NGT"));
-                    } else
-                        // index ∈ (/[x, y)/]
-                        if (cond.isRanged(primary)) {
-                            Pair<Pair<Pair<Object, Type>, Boolean>, Pair<Pair<Object, Type>, Boolean>> range = cond.getRange();
-                            Pair<Pair<Object, Type>, Boolean> lower = range.getKey();
-                            Pair<Pair<Object, Type>, Boolean> upper = range.getValue();
-                            boolean lowerOpen = lower.getValue();
-                            boolean upperOpen = upper.getValue();
-                            Object lowerKey = Type.convert(lower.getKey().getKey(), this.colTypes.get(this.primaryKey));
-                            Object upperKey = Type.convert(upper.getKey().getKey(), this.colTypes.get(this.primaryKey));
-                            return new ArrayList<>(this.index.search(lowerKey, !lowerOpen, upperKey, !upperOpen));
-                        }
-        }
-        // bad implementation
-        ArrayList<Long> res = new ArrayList<>();
-        ArrayList<Long> allRow = this.persistence.getAllRowNum();
-        LinkedList<String> colNames = this.combineTableColumn();
-        for (long row: allRow) {
-            if (cond.satisfied(colNames,
-                    new LinkedList<Type>(this.colTypes),
-                    this.persistence.get(row)))
-                res.add(row);
+    public ArrayList<Entry> getAllRowsKey() throws SearchException, IOException {
+        ArrayList<Entry> allKeys = index.getAllKeys();
+
+        return allKeys;
+    }
+    public ArrayList<Entry> search(Conditions cond) throws IOException, NDException {
+        if (cond == null) return getAllRowsKey();
+        ArrayList<Entry> res = new ArrayList<>();
+        ArrayList<Entry> allRow = this.getAllRowsKey();
+        for (Entry key: allRow) {
+            if (cond.satisfied(new LinkedList<String>(this.colNames),
+                    new LinkedList<ColumnType>(this.colTypes),
+                    getRowAsList(key)))
+                res.add(key);
         }
         return res;
     }
+
 
 }
