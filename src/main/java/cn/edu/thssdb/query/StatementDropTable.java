@@ -11,7 +11,7 @@ public class StatementDropTable {
     }
 
     //execute drop table
-    public ExecResult Exec(Database db){
+    public ExecResult exec(Database db){
         if(db == null)
             throw new NullPointerException(NullPointerException.Database);
 

@@ -7,7 +7,7 @@ import javafx.util.Pair;
 import cn.edu.thssdb.exception.NullPointerException;
 import java.util.ArrayList;
 
-public class StatementCreateTable {
+public class StatementCreateTable extends AbstractStatement{
     private String table_name;
     private Column[] cols;
 
