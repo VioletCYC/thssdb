@@ -19,7 +19,7 @@ public final class BPlusTree<K extends Comparable<K>, V> implements Iterable<Pai
     return size;
   }
 
-  public LinkedList get(K key) {
+  public V get(K key) {
     if (key == null) throw new IllegalArgumentException("argument key to get() is null");
     return root.get(key);
   }

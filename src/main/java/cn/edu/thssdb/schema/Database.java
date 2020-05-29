@@ -18,7 +18,7 @@ public class Database {
 
   private String name;
   private HashMap<String, Table> tables;
-  ReentrantReadWriteLock lock;
+  public ReentrantReadWriteLock lock;
 
   public Database(String name) {
     this.name = name;
