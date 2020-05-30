@@ -8,44 +8,57 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import cn.edu.thssdb.parser.*;
 
 import java.util.ArrayList;
 
+import static org.junit.Assert.*;
+
 public class QueryTest {
-    private SQLParser parser;
     private SQLLexer lexer;
     private Manager manager;
     private Database db;
+    private ArrayList<CharStream> input;
 
     @Before
     public void init() {
-        CharStream input = CharStreams.fromString(
-                "CREATE TABLE person (name String(256), ID Int not null, PRIMARY KEY(ID));" +
-                        "insert into person (name, ID) values ('Bob', 15);" +
-                        "insert into person values ('Allen', 22);" +
-                        "insert into person(ID) values(23);" +
-                        "update person set ID = 16 where ID = 15;" +
-                        "delete from person where col1 = 15;" +
-                        "drop table person;");
-        lexer = new SQLLexer(input);
-        CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-        parser = new SQLParser(tokenStream);
+        input = new ArrayList<>();
+        input.add(CharStreams.fromString("CREATE TABLE person (name String(256), ID Int not null, PRIMARY KEY(ID));"));
+        input.add(CharStreams.fromString("insert into person (name, ID) values ('Bob', 15);"));
+        input.add(CharStreams.fromString("insert into person values ('Allen', 22);"));
+        input.add(CharStreams.fromString("insert into person (ID) values (23);"));
+        input.add(CharStreams.fromString("update person set name = 'Emily' where name = 'Bob';"));
+        input.add(CharStreams.fromString("select * from person where name = 'Allen';"));
+        input.add(CharStreams.fromString("delete from person where ID = 15;"));
+        input.add(CharStreams.fromString("drop table person;"));
 
         manager = Manager.getInstance();
     }
 
     @Test
     public void parseTest() {
-        Database db = manager.createDatabaseIfNotExists("testDatabase");
-//        MyVisitor visitor = new MyVisitor();
-//        ArrayList res = (ArrayList) visitor.visit(parser.parse());
-//        for(Object statement: res) {
-////            ((AbstractStatement) statement).exec();
-//        }
+        try {
+            if (!manager.databases.containsKey("testDatabase")) {
+                db = manager.createDatabaseIfNotExists("testDatabase");
+            }
+            else {
+                db = manager.databases.get("testDatabase");
+            }
+
+            MyVisitor visitor = new MyVisitor();
+            for(CharStream stream: input) {
+                lexer = new SQLLexer(stream);
+                CommonTokenStream tokenStream = new CommonTokenStream(lexer);
+                SQLParser parser = new SQLParser(tokenStream);
+                ArrayList res = (ArrayList) visitor.visit(parser.parse());
+                for (Object statement : res) {
+                    ExecResult result = ((AbstractStatement) statement).exec(db);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.toString());
+            fail();
+        }
     }
 
     @Test

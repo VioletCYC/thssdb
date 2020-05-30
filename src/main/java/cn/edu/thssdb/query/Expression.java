@@ -113,7 +113,16 @@ public class Expression {
                 Object obj = ColumnType.convert(this.symbolORValue, this.valueColumnType);
                 return new Pair<>(obj, this.valueColumnType);
             case 1:
-                int idx = nameList.indexOf(this.symbolORValue);
+                String tablename, attrname;
+                int idx;
+                //把“表名.属性”分开
+                if(this.symbolORValue.contains(".")) {
+                    attrname = symbolORValue.split("\\.")[1];
+                    idx = nameList.indexOf((attrname));
+                }
+                else {
+                    idx = nameList.indexOf(this.symbolORValue);
+                }
                 if (idx == -1)
                     throw new GrammarException("Unknown column name '" + this.symbolORValue + "'!");
                 return new Pair<>(valueList.get(idx), ColumnTypeList.get(idx));

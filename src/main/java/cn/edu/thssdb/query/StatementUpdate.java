@@ -39,6 +39,7 @@ public class StatementUpdate extends AbstractStatement{
         return:
             the number of updated rows
     */
+    @Override
     public ExecResult exec(Database db) throws IOException, NDException {
         if (db == null) throw new NDException("not using any database");
         Table targetTable = db.getTable(this.targetTableName);
@@ -47,8 +48,9 @@ public class StatementUpdate extends AbstractStatement{
         for (Expression expr: exprList) {
             expr.normalize(param);
         }
-        if (cond != null)
-            cond.normalize(param);
+        //这里不需要正则化：无需ID->PERSON.ID
+//        if (cond != null)
+//            cond.normalize(param);
         ArrayList<Entry> toUpdate = targetTable.search(cond);
 
         int succeed = 0;

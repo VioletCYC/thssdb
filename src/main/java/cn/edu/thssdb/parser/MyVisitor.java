@@ -9,6 +9,8 @@ import cn.edu.thssdb.type.ColumnType;
 import cn.edu.thssdb.utils.mNumber;
 import javafx.util.Pair;
 import cn.edu.thssdb.query.*;
+
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -19,17 +21,25 @@ public class MyVisitor extends SQLBaseVisitor {
 
     @Override
     public Object visitParse(SQLParser.ParseContext ctx) {
-        return super.visitParse(ctx);
+        return visit(ctx.getChild(0));
     }
 
     @Override
     public Object visitSql_stmt_list(SQLParser.Sql_stmt_listContext ctx) {
-        return super.visitSql_stmt_list(ctx);
+        int n = ctx.getChildCount();
+        ArrayList res = new ArrayList();
+        for (int ctx_index = 0; ctx_index < n; ctx_index++) {
+            //跳过分号
+            if (!ctx.getChild(ctx_index).getText().equals(";")) {
+                res.add(visit(ctx.getChild(ctx_index)));
+            }
+        }
+        return res;
     }
 
     @Override
     public Object visitSql_stmt(SQLParser.Sql_stmtContext ctx) {
-        return super.visitSql_stmt(ctx);
+        return visit(ctx.getChild(0));
     }
 
     @Override
@@ -81,25 +91,28 @@ public class MyVisitor extends SQLBaseVisitor {
             //往下移一个，跳过','
             i += 1;
         }
-        //TODO: 调用StatementCreateTable
-//        return new StatementCreateTable(tableName, cols);
-        return null;
+
+        Column[] columns = new Column[cols.size()];
+        for(int i = 0; i < cols.size(); i++) {
+            columns[i] = cols.get(i);
+        }
+        return new StatementCreateTable(tableName, columns);
+//        return null;
     }
 
     @Override
     public Object visitDrop_table_stmt(SQLParser.Drop_table_stmtContext ctx) {
         String tableName = ctx.getChild(2).getText().toUpperCase();
-        //TODO
-//        return new StatementDropTable(tableName);
-        return null;
+        return new StatementDropTable(tableName);
+//        return null;
     }
 
     @Override
     public Object visitShow_table_stmt(SQLParser.Show_table_stmtContext ctx) {
         String tableName = ctx.getChild(2).getText().toUpperCase();
-        //TODO
-//        return new StatementShowTable(tableName);
-        return null;
+
+        return new StatementShowTable(tableName);
+//        return null;
     }
 
     @Override
@@ -122,20 +135,20 @@ public class MyVisitor extends SQLBaseVisitor {
 
         //当前ctx_index指向"values_entry"
         ctx_index += 1;
-        LinkedList<LinkedList> valueList = new LinkedList<>();
+        LinkedList values = new LinkedList<>();
         int token_num = ctx.getChildCount();
         while(true) {
-            LinkedList values = (LinkedList) visit(ctx.getChild(ctx_index));
-            valueList.add(values);
+            //应该只有一组values
+            values = (LinkedList) visit(ctx.getChild(ctx_index));
             ctx_index += 2;
             if(ctx_index >= token_num)
                 break;
         }
         if(colNames == null) {
-            return new StatementInsert(tableName, valueList);
+            return new StatementInsert(tableName, values);
         }
         else {
-            return new StatementInsert(tableName, colNames, valueList);
+            return new StatementInsert(tableName, colNames, values);
         }
     }
 
@@ -150,14 +163,14 @@ public class MyVisitor extends SQLBaseVisitor {
             values.add(v.getKey());
             while (true) {
                 ctx_index += 2;
-                if (ctx_index > ctx.getChildCount())
+                if (ctx_index >= ctx.getChildCount())
                     break;
                 expr = (Expression) visit(ctx.getChild(ctx_index));
                 v = expr.getDirectValue();
                 values.add(v.getKey());
             }
         } catch (Exception e) {
-            throw new NDException("error");  //change
+            throw new NDException("error while parsing value_entry.");  //change
         }
         return values;
     }
@@ -176,7 +189,7 @@ public class MyVisitor extends SQLBaseVisitor {
 
     @Override
     public Object visitUpdate_stmt(SQLParser.Update_stmtContext ctx) {
-        String tableName = (String) visit(ctx.getChild(2));
+        String tableName = (String) visit(ctx.getChild(1));
         LinkedList<String> colList = new LinkedList<>();
         colList.add((String) visit(ctx.getChild(3)));
         LinkedList<Expression> exprList = new LinkedList<>();

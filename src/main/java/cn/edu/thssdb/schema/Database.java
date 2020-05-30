@@ -43,11 +43,13 @@ public class Database {
     }
   }
 
-  public void drop(String table_name) {
+  public void drop(String table_name)
+          throws IOException{
     //判断表名是否存在，删除表，对应drop语句
     if(!this.tables.containsKey(table_name))
       throw new NameNotExistException(NameNotExistException.TableName);
 
+    tables.get(table_name).release();
     this.tables.remove(table_name);
     File f = new File("data/" + name + "/" + table_name + ".data");
     File f2 = new File("data/" + name + "/" + table_name + ".tree");

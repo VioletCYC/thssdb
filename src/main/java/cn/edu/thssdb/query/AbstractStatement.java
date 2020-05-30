@@ -5,5 +5,5 @@ import cn.edu.thssdb.exception.NDException;
 import java.io.IOException;
 
 public abstract class AbstractStatement {
-    //abstract public ExecResult exec throws IOException, NDException(Database db){ };
+    abstract public ExecResult exec(Database db) throws IOException, NDException;
 }
