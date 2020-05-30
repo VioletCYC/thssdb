@@ -104,7 +104,7 @@ public class Table {
         index.remove(key);
     }
 
-    public void update(Entry key, LinkedList<String> colList, LinkedList<Expression> exprList)
+    public LinkedList update(Entry key, LinkedList<String> colList, LinkedList<Expression> exprList)
             throws InsertException, IOException {
         //delete(old_values);
         //insert(new_values);
@@ -123,7 +123,7 @@ public class Table {
 
         delete(key);
         insert(newData);
-
+        return newData;
     }
 
     private ArrayList<Integer> serialize_row(Row row)

@@ -23,8 +23,9 @@ public class Session{
     public static int READ_COMMITED = 1;
     public static int REPEATABLE_READ = 2;
     public static int SERIALIZABLE = 3;
-    private int Iso_level;
+    private int isolation;
     public boolean inTransaction = false;
+    public boolean isAbort = false;
     public LinkedHashSet<Session> temp;                //该session正在等待哪些session
     public LinkedHashSet<Session> waitingSession;      //有哪些session在等待该session结束
     public ArrayList<AbstractStatement> statement;
@@ -35,6 +36,7 @@ public class Session{
         this.rowActionList = new LinkedList<>();
         this.TableForWrite = new ArrayList<>();
         this.TableForRead = new ArrayList<>();
+
     }
 
     public void AddInsert(StatementInsert cs){
@@ -76,6 +78,7 @@ public class Session{
 
     }
 
+    public int getIsolation(){return isolation;}
 
     public ArrayList<String> getTableForWrite(){return this.TableForWrite;}
 

@@ -68,7 +68,9 @@ public class StatementInsert extends AbstractStatement{
 //        LinkedList val = new LinkedList();
 //        val.add(succeed);
 //        execResult.insert(val);
-        return new ExecResult("insert " + succeed + " rows!", 1, null, values);
+        LinkedList<LinkedList> insertRow = new LinkedList<>();
+        insertRow.add(values);
+        return new ExecResult("insert " + succeed + " rows!", 1, null, insertRow);
     }
 
     public String gettable_name(){return this.table_name;}

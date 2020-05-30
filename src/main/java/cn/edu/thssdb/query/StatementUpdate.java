@@ -51,14 +51,20 @@ public class StatementUpdate extends AbstractStatement{
             cond.normalize(param);
         ArrayList<Entry> toUpdate = targetTable.search(cond);
 
+        LinkedList<LinkedList> oldvalue = new LinkedList<>();
+        LinkedList<LinkedList> newvalue = new LinkedList<>();
         int succeed = 0;
         for (Entry row: toUpdate) {
-            targetTable.update(row, colList, exprList);
+            LinkedList oldrow = targetTable.getRowAsList(row);
+            oldvalue.add(oldrow);
+
+            LinkedList newrow = targetTable.update(row, colList, exprList);
+            newvalue.add(newrow);
             succeed += 1;
         }
 //        targetTable.close();
 
-        return new ExecResult("update " + succeed + " records!");
+        return new ExecResult("update " + succeed + " records!", 3, oldvalue, newvalue);
     }
 
     public String gettable_name(){return this.targetTableName;}

@@ -17,4 +17,9 @@ public class RowAction {
         this.newRow = newRow;
     }
 
+    public int getType(){return type;}
+
+    public LinkedList<LinkedList> getOldRow(){return oldRow;}
+
+    public LinkedList<LinkedList> getNewRow(){return newRow;}
 }

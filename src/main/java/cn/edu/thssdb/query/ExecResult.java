@@ -31,7 +31,7 @@ public class ExecResult {
     //insert 传入newvalue为一行插入的值
     //delete 传入oldvalue为多行删除的值
     //updat  传入oldvalue为多行删除的值，传入newvalue为多行插入的值
-    public ExecResult(String msg, int type, LinkedList oldvalue, LinkedList newvalue) {
+    public ExecResult(String msg, int type, LinkedList<LinkedList> oldvalue, LinkedList<LinkedList> newvalue) {
         this.type = type;
         this.msg = msg;
         this.oldValue = oldvalue;

@@ -1,15 +1,10 @@
 package cn.edu.thssdb.transaction;
 
-import cn.edu.thssdb.query.ExecResult;
-import cn.edu.thssdb.query.StatementDelete;
-import cn.edu.thssdb.query.StatementInsert;
-import cn.edu.thssdb.query.StatementUpdate;
+import cn.edu.thssdb.query.*;
 import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.exception.NullPointerException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
+
+import java.util.*;
 
 public class TransactionManager2PL{
     public Database db;
@@ -33,20 +28,22 @@ public class TransactionManager2PL{
             lockTables(session);
             beginExecution(session);
         }
-        else{
+        else if(!session.isAbort){
             setWaitingSession(session);
         }
         db.lock.writeLock().unlock();
 
     }
 
-    //需要的锁都已释放，开始此事务
-    public void beginActionResume(Session session){
-
-    }
 
     //逐条执行session中的语句
     public void beginExecution(Session session){
+        if(session == null)
+            throw new NullPointerException(NullPointerException.Session);
+
+        if(session.isAbort)
+            return;
+
         int count = session.statement.size();
         for(int i=0; i<count; i++){
             try {
@@ -64,7 +61,8 @@ public class TransactionManager2PL{
                 }
             }
             catch (Exception e){
-
+                session.isAbort = true;
+                rollback(session);
             }
         }
     }
@@ -75,7 +73,7 @@ public class TransactionManager2PL{
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
 
-
+        session.temp.clear();
         for(String s: session.TableForWrite){
             Session holder = tableWriteLock.get(s);
             if(holder!=null && holder!=session){
@@ -95,11 +93,37 @@ public class TransactionManager2PL{
             }
         }
 
-        return session.temp.isEmpty();
+        if(session.temp.isEmpty())
+            return true;
+
+        if(!checkDeadLock(session, session.temp))
+            session.isAbort = true;
+
+        return false;
+    }
+
+    private boolean checkDeadLock(Session session, LinkedHashSet newWait){
+        if(session == null)
+            throw new NullPointerException(NullPointerException.Session);
+
+        int count = session.waitingSession.size();
+        Iterator<Session> it = session.waitingSession.iterator();
+        while(it.hasNext()){
+            Session current = it.next();
+            if(newWait.contains(current))
+                return false;
+            if(!checkDeadLock(current, newWait))
+                return false;
+        }
+
+        return true;
     }
 
     //将该session正在等待的目标session加入目标session中
     private void setWaitingSession(Session session){
+        if(session == null)
+            throw new NullPointerException(NullPointerException.Session);
+
         for(Session s: session.temp){
             s.waitingSession.add(session);
         }
@@ -108,6 +132,9 @@ public class TransactionManager2PL{
 
     //事务语句执行前，给要读写的表上锁
     private void lockTables(Session session){
+        if(session == null)
+            throw new NullPointerException(NullPointerException.Session);
+
         ArrayList<String> TableToWrite = session.getTableForWrite();
         for(String s: TableToWrite){
             this.tableWriteLock.put(s, session);
@@ -120,8 +147,31 @@ public class TransactionManager2PL{
 
     }
 
+
+    //持久化存储，并释放所有锁
+    public void commit(Session session){
+        if(session == null)
+            throw new NullPointerException(NullPointerException.Session);
+
+        db.lock.writeLock().lock();
+        //持久化存储写过的表
+        for(String s: session.TableForWrite){
+            try{
+                db.getTable(s).persist();
+            }
+            catch (Exception e){
+                rollback(session);
+            }
+        }
+        unlockTables(session);
+        db.lock.writeLock().unlock();
+    }
+
     //commit后，释放所有锁
     private void unlockTables(Session session){
+        if(session == null)
+            throw new NullPointerException(NullPointerException.Session);
+
         Iterator it = tableWriteLock.values().iterator();
         while (it.hasNext()) {
             Session s = (Session) it.next();
@@ -137,21 +187,29 @@ public class TransactionManager2PL{
                 it.remove();
             }
         }
+        resetlock(session);
     }
 
-    //持久化存储，并释放所有锁
-    public void commit(Session session){
+    private void resetlock(Session session){
+        if(session == null)
+            throw new NullPointerException(NullPointerException.Session);
 
-        //持久化存储写过的表
-        for(String s: session.TableForWrite){
-            try{
-                db.getTable(s).persist();
+        int count = session.waitingSession.size();
+        if(count <= 0)
+            return;
+
+        Iterator<Session> it = session.waitingSession.iterator();
+        while(it.hasNext()){
+            Session cur = it.next();
+            boolean canProceed = setWaitedSession(cur);
+            if(canProceed){
+                lockTables(cur);
+                beginExecution(cur);
             }
-            catch (Exception e){
-                rollback(session, session.statement.size());
+            else{
+                setWaitingSession(cur);
             }
         }
-        unlockTables(session);
     }
 
     public void addInsert(Session session, StatementInsert cs){
@@ -159,8 +217,6 @@ public class TransactionManager2PL{
         String table_name = cs.gettable_name();
         RowAction action = new RowAction(table_name, 1, null, res.getNewValue());
         session.rowActionList.add(action);
-
-        endEachAction(session);
     }
 
     public void addDelete(Session session, StatementDelete cs){
@@ -168,20 +224,51 @@ public class TransactionManager2PL{
         String table_name = cs.gettable_name();
         RowAction action = new RowAction(table_name, 2, res.getOldValue(), null);
         session.rowActionList.add(action);
-
-        endEachAction(session);
     }
 
+    //TODO
     public void addUpdate(Session session, StatementUpdate cs){
+        try{
+            ExecResult res = cs.exec(db);
+            String table_name = cs.gettable_name();
+            RowAction action = new RowAction(table_name, 3, res.getOldValue(), res.getNewValue());
+            session.rowActionList.add(action);
+        }
+        catch (Exception e){}
+    }
+
+    //TODO
+    public void addSelect(Session session, StatementSelect cs){
+        try{
+            ExecResult res = cs.exec(db);
+            unlockReadLock(session, cs);
+        }
+        catch (Exception e){}
+    }
+
+    private void unlockReadLock(Session session, StatementSelect cs){
+        if(session.getIsolation() == 2)
+            return;
+
+        LinkedList<String> table_list = cs.getTargetList();
+        for(String s: table_list){
+            tableReadLock.remove(s);
+        }
 
     }
 
-    private void endEachAction(Session session){
+    //TODO：回滚具体操作，后续完成
+    private void rollback(Session session){
+        db.lock.writeLock().lock();
+        int count = session.rowActionList.size();
+        for(int i=count-1; i>=0; i++){
+            RowAction tem = session.rowActionList.get(i);
+            if(tem.getType()==1){
+                LinkedList<LinkedList> newRow = tem.getNewRow();
+            }
+        }
 
-    }
-
-    private void rollback(Session session, int index){
-
+        db.lock.writeLock().unlock();
     }
 
 }
