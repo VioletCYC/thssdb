@@ -35,14 +35,15 @@ public enum ColumnType {
       case STRING:
         return str;
       default:
-        throw new GrammarException(type + "is not a basic type");
+        throw new GrammarException("not base type.");
     }
   }
 
   //根据计算的两数类型，得出结果的数据类型
   public static ColumnType lift(ColumnType t1, ColumnType t2) {
     if ((isNumber(t1) && !isNumber(t2)) || (!isNumber(t1) && isNumber(t2)))
-      throw new GrammarException(t1 + " & " + t2 + " are not basic type");
+      throw new GrammarException("Type " + t1+ " & " + t2 + ": error.");
+
     if (!isNumber(t1) && !isNumber(t2))
       return STRING;
     if (t1 == DOUBLE || t2 == DOUBLE)

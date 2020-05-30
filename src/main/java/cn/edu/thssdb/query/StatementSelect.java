@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-public class StatementSelect {
+public class StatementSelect extends AbstractStatement{
     private LinkedList<String> targetList;
     private RangeVariable rv;
     private Conditions cond;
@@ -109,4 +109,6 @@ public class StatementSelect {
             return res;
         }
     }
+
+    public LinkedList<String> getTargetList(){return targetList;}
 }

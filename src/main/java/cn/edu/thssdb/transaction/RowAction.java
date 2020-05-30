@@ -5,12 +5,14 @@ import cn.edu.thssdb.schema.Row;
 import java.util.LinkedList;
 
 public class RowAction {
-    private LinkedList oldRow;
-    private LinkedList newRow;
+    private LinkedList<LinkedList> oldRow;
+    private LinkedList<LinkedList> newRow;
     private String table_name;
+    private int type;      //1 INSERT   2 DELETE   3 UPDATE
 
-    public RowAction(String table_name, LinkedList oldRow, LinkedList newRow){
+    public RowAction(String table_name, int type, LinkedList oldRow, LinkedList newRow){
         this.table_name = table_name;
+        this.type = type;
         this.oldRow = oldRow;
         this.newRow = newRow;
     }

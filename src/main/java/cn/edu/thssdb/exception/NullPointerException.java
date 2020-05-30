@@ -5,6 +5,7 @@ public class NullPointerException extends RuntimeException {
     public static int Table = 1;
     public static int Database = 2;
     public static int Column = 3;
+    public static int Session = 4;
 
     public NullPointerException(int type){errorType = type;}
 
@@ -13,6 +14,8 @@ public class NullPointerException extends RuntimeException {
         String msg = "";
         if(errorType == Database)
             msg = "Exception: Null database pointer!";
+        if(errorType == Session)
+            msg = "Exception: Null session pointer!";
 
         return msg;
     }

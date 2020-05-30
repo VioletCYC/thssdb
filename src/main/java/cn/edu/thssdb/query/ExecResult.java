@@ -12,18 +12,30 @@ public class ExecResult {
     private LinkedList<String> colNames;
     private LinkedList<ColumnType> typeList;
     private LinkedList<LinkedList> dataList;
+    private LinkedList<LinkedList> oldValue;
+    private LinkedList<LinkedList> newValue;
     private String msg;
-    private int type;
+    private int type;      //1: insert  2:delete   3:update
 
     public ExecResult() {
         this.colNames = new LinkedList<>();
         this.dataList = new LinkedList<>();
     }
-    //for  insert, update, delete, createTable, dropTable
-    public ExecResult(String msg) {
-        this.colNames = new LinkedList<>();
-        this.dataList = new LinkedList<>();
+
+    //for  createTable  dropTable
+    public ExecResult(String msg){
         this.msg = msg;
+    }
+
+    //for  insert, update, delete
+    //insert 传入newvalue为一行插入的值
+    //delete 传入oldvalue为多行删除的值
+    //updat  传入oldvalue为多行删除的值，传入newvalue为多行插入的值
+    public ExecResult(String msg, int type, LinkedList oldvalue, LinkedList newvalue) {
+        this.type = type;
+        this.msg = msg;
+        this.oldValue = oldvalue;
+        this.newValue = newvalue;
     }
 
     //for  showTable
@@ -130,4 +142,8 @@ public class ExecResult {
     public LinkedList<LinkedList> getDataList() {
         return dataList;
     }
+
+    public LinkedList<LinkedList> getOldValue(){return oldValue;}
+
+    public LinkedList<LinkedList> getNewValue(){return newValue;}
 }

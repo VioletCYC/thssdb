@@ -153,7 +153,7 @@ public class StoreTest {
             new_data.add(new String("new Ruan Jian Fen Xi"));
             new_data.add(new Double(7.7));
             new_data.add(new Long(777));
-            table.update(data6, new_data);
+//            table.update(data6, new_data);
 
             Row newData_test = table.getRowFromFile(new Entry(7));
             assertEquals(newData_test.get(0), (Integer)7);
@@ -177,7 +177,7 @@ public class StoreTest {
             data8.add(new Double(8.8));
             data8.add(new Long(88));
             table.insert(data8);
-            table.delete(data8);
+//            table.delete(data8);
 
         } catch (Exception e) {
             //这里不应该抛出异常

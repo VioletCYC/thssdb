@@ -11,6 +11,7 @@ import cn.edu.thssdb.utils.mNumber;
 import javafx.util.Pair;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -184,7 +185,7 @@ public class Table {
     public Row getRowFromFile(Entry key)
             throws SearchException, IOException {
 
-        LinkedList storePos = index.get(key);
+        ArrayList storePos = index.get(key);
         int offset = (int) storePos.get(0);   //文件起始位置
         int length = (int) storePos.get(1);   //读入的字节数（记录长度）
         byte[] buffer = new byte[length];
@@ -209,7 +210,7 @@ public class Table {
     public LinkedList getRowAsList(Entry key)
             throws SearchException, IOException {
 
-        LinkedList storePos = index.get(key);
+        ArrayList storePos = index.get(key);
         int offset = (int) storePos.get(0);   //文件起始位置
         int length = (int) storePos.get(1);   //读入的字节数（记录长度）
         byte[] buffer = new byte[length];
@@ -353,6 +354,7 @@ public class Table {
 
         return allKeys;
     }
+
     public ArrayList<Entry> search(Conditions cond) throws IOException, NDException {
         if (cond == null) return getAllRowsKey();
         ArrayList<Entry> res = new ArrayList<>();
@@ -366,5 +368,8 @@ public class Table {
         return res;
     }
 
-
+    public void persist()
+            throws IOException {
+        serialize_tree();
+    }
 }

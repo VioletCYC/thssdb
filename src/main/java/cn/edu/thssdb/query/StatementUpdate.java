@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-public class StatementUpdate {
+public class StatementUpdate extends AbstractStatement{
     private String targetTableName;
     private LinkedList<String> colList;
     private LinkedList<Expression> exprList;
@@ -60,4 +60,6 @@ public class StatementUpdate {
 
         return new ExecResult("update " + succeed + " records!");
     }
+
+    public String gettable_name(){return this.targetTableName;}
 }

@@ -68,7 +68,7 @@ public class TempTable{
     public LinkedList getRowFromFile(Entry key)
             throws SearchException, IOException {
 
-        LinkedList storePos = index.get(key);
+        ArrayList storePos = index.get(key);
         int offset = (int) storePos.get(0);   //文件起始位置
         int length = (int) storePos.get(1);   //读入的字节数（记录长度）
         byte[] buffer = new byte[length];
@@ -148,7 +148,7 @@ public class TempTable{
      * @return
      */
     public LinkedList getSingleRowData(Entry key) throws NDException, IOException {
-        return this.index.get(key);
+        return new LinkedList(this.index.get(key));
     }
 
     public ArrayList<String> getColNames() {
