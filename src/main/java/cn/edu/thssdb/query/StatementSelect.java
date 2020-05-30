@@ -23,6 +23,7 @@ public class StatementSelect extends AbstractStatement{
         this.cond = cond;
     }
 
+    @Override
     public ExecResult exec(Database db) throws IOException, NDException {
         if (db == null) throw new NDException("not using any database");
         ExecResult res;

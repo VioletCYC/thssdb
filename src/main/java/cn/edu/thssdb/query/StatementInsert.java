@@ -5,6 +5,7 @@ import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.exception.NullPointerException;
 import cn.edu.thssdb.schema.Table;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -26,7 +27,9 @@ public class StatementInsert extends AbstractStatement{
 
 
     //执行一行插入
-    public ExecResult exec(Database db){
+    @Override
+    public ExecResult exec(Database db)
+            throws IOException {
         if(db == null)
             throw new NullPointerException(NullPointerException.Database);
 
@@ -58,11 +61,8 @@ public class StatementInsert extends AbstractStatement{
 //            System.out.println(this.valueList.get(0));
 //        }
 
-        try{
             targetTable.insert(values);
             succeed += 1;
-        }
-        catch(Exception e){}
 //        targetTable.close();
 
 //        LinkedList val = new LinkedList();

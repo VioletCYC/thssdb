@@ -5,6 +5,7 @@ import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.schema.Entry;
 import cn.edu.thssdb.schema.Table;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -23,29 +24,28 @@ public class StatementDelete extends AbstractStatement{
 
 
     //执行可能多行的删除
-    public ExecResult exec(Database db){
+    @Override
+    public ExecResult exec(Database db)
+            throws IOException {
         if(db == null)
             throw new NullPointerException(NullPointerException.Database);
 
         Table targetTable = db.getTable(this.table_name);
         ArrayList<Table> param = new ArrayList<>();
         param.add(targetTable);
-        if (cond != null)
-            cond.normalize(param);
+
+        //这里不需要正则化：无需ID->PERSON.ID
+//        if (cond != null)
+//            cond.normalize(param);
 
         LinkedList<LinkedList> allRow = new LinkedList<>();
         int succeed = 0;
-        try{
-            ArrayList<Entry> rowList = targetTable.search(cond);
-            for (Entry key: rowList) {
-                LinkedList row = targetTable.getRowAsList(key);
-                targetTable.delete(key);
-                succeed += 1;
-                allRow.add(row);
-            }
-        }
-        catch (Exception e){
-
+        ArrayList<Entry> rowList = targetTable.search(cond);
+        for (Entry key: rowList) {
+            LinkedList row = targetTable.getRowAsList(key);
+            targetTable.delete(key);
+            succeed += 1;
+            allRow.add(row);
         }
 //        targetTable.close();
 

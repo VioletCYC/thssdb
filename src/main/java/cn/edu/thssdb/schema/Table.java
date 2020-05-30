@@ -40,6 +40,21 @@ public class Table {
             throws IOException, ClassNotFoundException {
         //TODO: 这几行之后应该挪到Manager里面
 
+        this.databaseName = databaseName;
+        this.tableName = tableName;
+        this.columns = new ArrayList<Column>();
+        this.colNames = new ArrayList<String>();
+        this.colTypes = new ArrayList<>();
+        Collections.addAll(this.columns, columns);
+
+        //计算记录的最大长度
+        maxRowSize = 0;
+        for (Column col : columns) {
+            maxRowSize = maxRowSize + mNumber.byteOfType(col.getType());
+            colTypes.add(col.getType());     //debug，这两行是否需要加？
+            colNames.add(col.getName());
+        }
+
         // 如果文件存在：从文件中恢复B+树
         File treeFile = new File("data/" + databaseName + "/" + tableName + ".tree");
         if (treeFile.exists())
@@ -55,20 +70,6 @@ public class Table {
         }
 
         dataFile = new RandomAccessFile("data/" + databaseName + "/" + tableName + ".data", "rw");
-
-        this.databaseName = databaseName;
-        this.tableName = tableName;
-        this.columns = new ArrayList<Column>();
-        this.colNames = new ArrayList<String>();
-        Collections.addAll(this.columns, columns);
-
-        //计算记录的最大长度
-        maxRowSize = 0;
-        for (Column col : columns) {
-            maxRowSize = maxRowSize + mNumber.byteOfType(col.getType());
-            colTypes.add(col.getType());     //debug，这两行是否需要加？
-            colNames.add(col.getName());
-        }
 
     }
 
@@ -323,8 +324,15 @@ public class Table {
 
     public void close()
             throws IOException {
-        dataFile.close();
+        //这里如果close了，之后就不能再插入了
+//        dataFile.close();
         serialize_tree();
+    }
+
+    //在删除table之前执行的清理工作，如关闭文件等
+    public void release()
+            throws IOException{
+        dataFile.close();
     }
 
     public ArrayList<Column> getColumns(){
@@ -360,7 +368,7 @@ public class Table {
         ArrayList<Entry> res = new ArrayList<>();
         ArrayList<Entry> allRow = this.getAllRowsKey();
         for (Entry key: allRow) {
-            if (cond.satisfied(new LinkedList<String>(this.colNames),
+            if (key != null && cond.satisfied(new LinkedList<String>(this.colNames),
                     new LinkedList<ColumnType>(this.colTypes),
                     getRowAsList(key)))
                 res.add(key);

@@ -5,6 +5,12 @@ import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.exception.NullPointerException;
 
 import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+
 
 public class TransactionManager2PL{
     public Database db;
@@ -212,14 +218,14 @@ public class TransactionManager2PL{
         }
     }
 
-    public void addInsert(Session session, StatementInsert cs){
+    public void addInsert(Session session, StatementInsert cs) throws IOException {
         ExecResult res = cs.exec(db);
         String table_name = cs.gettable_name();
         RowAction action = new RowAction(table_name, 1, null, res.getNewValue());
         session.rowActionList.add(action);
     }
 
-    public void addDelete(Session session, StatementDelete cs){
+    public void addDelete(Session session, StatementDelete cs) throws IOException{
         ExecResult res = cs.exec(db);
         String table_name = cs.gettable_name();
         RowAction action = new RowAction(table_name, 2, res.getOldValue(), null);
