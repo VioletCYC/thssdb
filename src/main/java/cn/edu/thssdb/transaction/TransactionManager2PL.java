@@ -1,15 +1,16 @@
 package cn.edu.thssdb.transaction;
 
+import cn.edu.thssdb.exception.NullPointerException;
 import cn.edu.thssdb.query.*;
 import cn.edu.thssdb.schema.Database;
-import cn.edu.thssdb.exception.NullPointerException;
+import cn.edu.thssdb.schema.Entry;
+import cn.edu.thssdb.schema.Table;
 
-import java.util.*;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.io.ObjectInputStream;
+import java.util.*;
+
 
 
 public class TransactionManager2PL{
@@ -23,7 +24,7 @@ public class TransactionManager2PL{
     }
 
     //根据锁判断是否能进行该session的一系列操作
-    public void beginTransaction(Session session){
+    public void beginTransaction(Session session) throws IOException, ClassNotFoundException {
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
 
@@ -43,12 +44,42 @@ public class TransactionManager2PL{
 
 
     //逐条执行session中的语句
-    public void beginExecution(Session session){
+    public void beginExecution(Session session) throws IOException, ClassNotFoundException {
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
 
         if(session.isAbort)
             return;
+
+        if (session.f.exists()) {
+            //session.f.createNewFile();
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(session.f));
+            while(ois.readObject()!=null) {
+                String tablename = (String) ois.readObject();
+                int type = (int) ois.readObject();
+                LinkedList<LinkedList> oldvalue = (LinkedList<LinkedList>) ois.readObject();
+                LinkedList<LinkedList> newvalue = (LinkedList<LinkedList>) ois.readObject();
+                ois.close();
+                Table table = db.getTable(tablename);
+                if (type == 1) {
+                    table.insert(newvalue);
+                }
+                if (type == 2) {
+                    Entry key = table.getKey(oldvalue);
+                    table.delete(key);
+                }
+                if (type == 3) {
+                    table.insert(newvalue);
+                    Entry key = table.getKey(oldvalue);
+                    table.delete(key);
+                }
+            }
+            session.f.delete();
+
+        }
+        else {
+
+        }
 
         int count = session.statement.size();
         for(int i=0; i<count; i++){
@@ -70,6 +101,7 @@ public class TransactionManager2PL{
                 session.isAbort = true;
                 rollback(session);
             }
+            session.f.delete();
         }
     }
 
@@ -155,7 +187,7 @@ public class TransactionManager2PL{
 
 
     //持久化存储，并释放所有锁
-    public void commit(Session session){
+    public void commit(Session session) throws IOException, ClassNotFoundException {
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
 
@@ -174,7 +206,7 @@ public class TransactionManager2PL{
     }
 
     //commit后，释放所有锁
-    private void unlockTables(Session session){
+    private void unlockTables(Session session) throws IOException, ClassNotFoundException {
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
 
@@ -196,7 +228,7 @@ public class TransactionManager2PL{
         resetlock(session);
     }
 
-    private void resetlock(Session session){
+    private void resetlock(Session session) throws IOException, ClassNotFoundException {
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
 
@@ -276,5 +308,10 @@ public class TransactionManager2PL{
 
         db.lock.writeLock().unlock();
     }
+/*
+    public void writeInsert(Session session, StatementInsert cs) throws IOException {
+        Writer out =new FileWriter(session.f);
 
+    }
+*/
 }

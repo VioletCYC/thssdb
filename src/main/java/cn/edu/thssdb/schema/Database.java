@@ -1,11 +1,8 @@
 package cn.edu.thssdb.schema;
 
 import cn.edu.thssdb.exception.FileException;
-import cn.edu.thssdb.exception.NDException;
 import cn.edu.thssdb.exception.NameAlreadyExistException;
 import cn.edu.thssdb.exception.NameNotExistException;
-import cn.edu.thssdb.query.QueryResult;
-import cn.edu.thssdb.query.QueryTable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -16,7 +13,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Database {
 
-  private String name;
+  public String name;
   private HashMap<String, Table> tables;
   public ReentrantReadWriteLock lock;
 

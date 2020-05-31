@@ -1,18 +1,22 @@
 package cn.edu.thssdb.query;
 
 import cn.edu.thssdb.exception.GrammarException;
-import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.exception.NullPointerException;
+import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.schema.Table;
+import cn.edu.thssdb.transaction.Session;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class StatementInsert extends AbstractStatement{
     private String table_name;
-    private LinkedList values;
+    public LinkedList values;
     private LinkedList<String> col;
+    private Session session;
 
     public StatementInsert(String table_name, LinkedList value){
         this.table_name = table_name;
@@ -68,8 +72,23 @@ public class StatementInsert extends AbstractStatement{
 //        LinkedList val = new LinkedList();
 //        val.add(succeed);
 //        execResult.insert(val);
+
+
         LinkedList<LinkedList> insertRow = new LinkedList<>();
         insertRow.add(values);
+
+        // for log
+        LinkedList<LinkedList> oldvalue = null;
+        LinkedList<LinkedList> newvalue = insertRow;
+        FileOutputStream fileInputStream = new FileOutputStream(session.f);
+        ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
+        oos.writeObject(this.table_name);
+        oos.writeObject(1);
+        oos.writeObject((oldvalue));
+        oos.writeObject(newvalue);
+        oos.close();
+        //
+
         return new ExecResult("insert " + succeed + " rows!", 1, null, insertRow);
     }
 

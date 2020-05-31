@@ -3,6 +3,8 @@ package cn.edu.thssdb.transaction;
 import cn.edu.thssdb.query.*;
 import cn.edu.thssdb.schema.Database;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -29,13 +31,16 @@ public class Session{
     public LinkedHashSet<Session> temp;                //该session正在等待哪些session
     public LinkedHashSet<Session> waitingSession;      //有哪些session在等待该session结束
     public ArrayList<AbstractStatement> statement;
+    private String prefix = "log/";
+    public  File f;
 
-    public Session(Database db, int id){
+    public Session(Database db, int id) throws IOException, ClassNotFoundException {
         this.db = db;
         this.ID = id;
         this.rowActionList = new LinkedList<>();
         this.TableForWrite = new ArrayList<>();
         this.TableForRead = new ArrayList<>();
+        this.f = new File(prefix + id +".log");
 
     }
 
@@ -77,6 +82,7 @@ public class Session{
     public void setIsolation(int level){
 
     }
+
 
     public int getIsolation(){return isolation;}
 
