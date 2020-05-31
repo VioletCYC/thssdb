@@ -40,7 +40,7 @@ public class QueryTest {
 //        input.add(CharStreams.fromString("update person set name = 'Emily' where name = 'Bob';"));
 //        input.add(CharStreams.fromString("select * from person where name = 'Allen';"));
 //        input.add(CharStreams.fromString("select ID from person join course on person.name=course.stu_name;"));
-        input.add(CharStreams.fromString("select person.name, course.course_name from person join course on person.name=course.stu_name join teach on person.name=teach.s_name;"));
+        input.add(CharStreams.fromString("select distinct person.name, course.course_name from person join course on person.name=course.stu_name join teach on person.name=teach.s_name;"));
         input.add(CharStreams.fromString("delete from person where ID = 15;"));
         input.add(CharStreams.fromString("drop table person;"));
 

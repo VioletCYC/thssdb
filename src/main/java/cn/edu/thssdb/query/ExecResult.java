@@ -61,17 +61,17 @@ public class ExecResult {
     }
 
 
-    public void insert(LinkedList<String> allNames, LinkedList curData, LinkedList<String> ignoreNames){
+    public void insert(LinkedList<String> allNames, LinkedList curData, LinkedList<String> ignoreNames, boolean distinct){
         LinkedList data = new LinkedList<>();
         int n = allNames.size();
         for (int i = 0; i < n; ++i) {
             if (ignoreNames.indexOf(allNames.get(i)) < 0)
                 data.add(curData.get(i));
         }
-        dataList.add(data);
+        insert(data, distinct);
     }
 
-    public void insert(LinkedList<String> curNames, LinkedList curData, ArrayList<Table> tableList, LinkedList<String> ignoreNames) {
+    public void insert(LinkedList<String> curNames, LinkedList curData, ArrayList<Table> tableList, LinkedList<String> ignoreNames, boolean distinct) {
         LinkedList data = new LinkedList();
         for (String colName: this.colNames) {
             Expression tmp = new Expression(1, colName);
@@ -83,11 +83,26 @@ public class ExecResult {
             }
             data.add(curData.get(idx));
         }
-        insert(data);
+        insert(data, distinct);
     }
 
-    public void insert(LinkedList data) {
-        dataList.add(data);
+    public void insert(LinkedList data, boolean distinct) {
+        boolean is_duplicate = false;
+        if(distinct) {
+            for(LinkedList values: dataList) {
+                is_duplicate = true;
+                for(int i = 0; i < values.size(); i++) {
+                    if(!values.get(i).equals(data.get(i))) {
+                        is_duplicate = false;
+                        break;
+                    }
+                }
+                if(is_duplicate)
+                    break;
+            }
+        }
+        if(!is_duplicate)
+            dataList.add(data);
     }
 
     public void show() {
