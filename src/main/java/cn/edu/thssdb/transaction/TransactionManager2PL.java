@@ -16,10 +16,15 @@ public class TransactionManager2PL{
     public Database db;
     private HashMap<String, Session> tableWriteLock;
     private HashMap<String, Session> tableReadLock;
+    public static int READ_COMMITED = 1;
+    public static int REPEATABLE_READ = 2;
+    public static int SERIALIZABLE = 3;
+    private int isolation;
 
-    public TransactionManager2PL(Database db){
+    public TransactionManager2PL(Database db, int level){
         this.db = db;
         this.tableWriteLock = new HashMap();
+        this.isolation = level;
     }
 
     //根据锁判断是否能进行该session的一系列操作
@@ -39,6 +44,8 @@ public class TransactionManager2PL{
         }
         db.lock.writeLock().unlock();
 
+        if(session.isAbort)
+            commit(session);
     }
 
 
@@ -65,12 +72,19 @@ public class TransactionManager2PL{
                     StatementUpdate cs = (StatementUpdate) session.statement.get(i);
                     addUpdate(session, cs);
                 }
+                else if(session.statement.get(i) instanceof  StatementSelect){
+                    StatementSelect cs = (StatementSelect) session.statement.get(i);
+                    addSelect(session, cs);
+                }
             }
             catch (Exception e){
                 session.isAbort = true;
                 rollback(session);
+                break;
             }
         }
+
+        commit(session);
     }
 
     //判断该session要读写的表是否正在被别的session锁住
@@ -85,17 +99,21 @@ public class TransactionManager2PL{
             if(holder!=null && holder!=session){
                 session.temp.add(holder);
             }
-            holder = tableReadLock.get(s);
-            if(holder!=null && holder!=session){
-                session.temp.add(holder);
-            }
 
+            if(isolation > READ_COMMITED) {
+                holder = tableReadLock.get(s);
+                if (holder != null && holder != session) {
+                    session.temp.add(holder);
+                }
+            }
         }
 
-        for(String s: session.TableForRead){
-            Session holder = tableWriteLock.get(s);
-            if(holder!=null && holder!=session){
-                session.temp.add(holder);
+        if(isolation > READ_COMMITED) {
+            for (String s : session.TableForRead) {
+                Session holder = tableWriteLock.get(s);
+                if (holder != null && holder != session) {
+                    session.temp.add(holder);
+                }
             }
         }
 
@@ -146,31 +164,36 @@ public class TransactionManager2PL{
             this.tableWriteLock.put(s, session);
         }
 
-        ArrayList<String> TableToRead = session.getTableForRead();
-        for(String s: TableToRead){
-            this.tableReadLock.put(s, session);
+        if(this.isolation > READ_COMMITED){
+            ArrayList<String> TableToRead = session.getTableForRead();
+            for(String s: TableToRead){
+                this.tableReadLock.put(s, session);
+            }
         }
 
     }
 
 
     //持久化存储，并释放所有锁
-    public void commit(Session session){
+    public LinkedList<ExecResult> commit(Session session){
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
 
         db.lock.writeLock().lock();
         //持久化存储写过的表
-        for(String s: session.TableForWrite){
-            try{
-                db.getTable(s).persist();
-            }
-            catch (Exception e){
-                rollback(session);
+        if(!session.isAbort) {
+            for (String s : session.TableForWrite) {
+                try {
+                    db.getTable(s).persist();
+                } catch (Exception e) {
+                    rollback(session);
+                }
             }
         }
         unlockTables(session);
         db.lock.writeLock().unlock();
+
+
     }
 
     //commit后，释放所有锁
@@ -248,19 +271,18 @@ public class TransactionManager2PL{
         try{
             ExecResult res = cs.exec(db);
             unlockReadLock(session, cs);
+            session.result.add(res);
         }
         catch (Exception e){}
     }
 
     private void unlockReadLock(Session session, StatementSelect cs){
-        if(session.getIsolation() == 2)
-            return;
-
-        LinkedList<String> table_list = cs.getTargetList();
-        for(String s: table_list){
-            tableReadLock.remove(s);
+        if(isolation == REPEATABLE_READ) {
+            LinkedList<String> table_list = cs.getTargetList();
+            for (String s : table_list) {
+                tableReadLock.remove(s);
+            }
         }
-
     }
 
     //TODO：回滚具体操作，后续完成
@@ -271,10 +293,14 @@ public class TransactionManager2PL{
             RowAction tem = session.rowActionList.get(i);
             if(tem.getType()==1){
                 LinkedList<LinkedList> newRow = tem.getNewRow();
+                for(LinkedList row: newRow){
+
+                }
             }
         }
 
         db.lock.writeLock().unlock();
     }
 
+    public void setIsolation(int level){isolation=level;}
 }

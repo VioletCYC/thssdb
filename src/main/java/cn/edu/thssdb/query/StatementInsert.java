@@ -53,21 +53,12 @@ public class StatementInsert extends AbstractStatement{
             values = valueList;
         }
 
-//      LinkedList<String> tableHeader = new LinkedList<>();
-//      tableHeader.add("Update_Count");
-//      ExecResult execResult = new ExecResult(tableHeader);
+
         int succeed = 0;
-//        if ((int)this.valueList.get(0).get(2) == 5844) {
-//            System.out.println(this.valueList.get(0));
-//        }
 
-            targetTable.insert(values);
-            succeed += 1;
-//        targetTable.close();
+        targetTable.insert(values);
+        succeed += 1;
 
-//        LinkedList val = new LinkedList();
-//        val.add(succeed);
-//        execResult.insert(val);
         LinkedList<LinkedList> insertRow = new LinkedList<>();
         insertRow.add(values);
         return new ExecResult("insert " + succeed + " rows!", 1, null, insertRow);
