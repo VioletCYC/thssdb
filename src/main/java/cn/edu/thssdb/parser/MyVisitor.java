@@ -51,7 +51,7 @@ public class MyVisitor extends SQLBaseVisitor {
         for(int i = 4; i < n; i++) {
             //这是create table语句的末尾
             if (ctx.getChild(i).getText().toUpperCase().contains("PRIMARY")) {
-                String colName = ctx.getChild(i).getChild(3).getText();
+                String colName = ctx.getChild(i).getChild(3).getText().toUpperCase();
                 for (Column col : cols) {
                     if (col.getName().equals(colName)) {
                         col.setPrimary(1);
@@ -232,7 +232,7 @@ public class MyVisitor extends SQLBaseVisitor {
         //TODO: 会存在下一个table_query吗？
 
         //如果后面存在where语句：解析where
-        if(ctx.getChildCount() >= ctx_index) {
+        if(ctx.getChildCount() > ctx_index+1) {
             ctx_index += 2;
             Conditions cond = (Conditions) visit(ctx.getChild(ctx_index));
             return new StatementSelect(selected_colNames, rv, cond);

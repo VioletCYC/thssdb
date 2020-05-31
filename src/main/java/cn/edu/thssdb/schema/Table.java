@@ -33,6 +33,9 @@ public class Table {
     private ArrayList<String> colNames;
     private ArrayList<ColumnType> colTypes;
 
+    //路径的前缀
+    private String prefix = "data/";
+
     public ArrayList<ColumnType> getColTypes() {
         return this.colTypes;
     }
@@ -56,7 +59,7 @@ public class Table {
         }
 
         // 如果文件存在：从文件中恢复B+树
-        File treeFile = new File("data/" + databaseName + "/" + tableName + ".tree");
+        File treeFile = new File(prefix + databaseName + "/" + tableName + ".tree");
         if (treeFile.exists())
             index = deserialize_tree(tableName);
         else {
@@ -64,13 +67,19 @@ public class Table {
         }
 
         //如果数据文件不存在，则新建
-        File f = new File("data/" + databaseName + "/" + tableName + ".data");
+        File f = new File(prefix + databaseName + "/" + tableName + ".data");
         if (!f.exists()) {
             f.createNewFile();
         }
 
-        dataFile = new RandomAccessFile("data/" + databaseName + "/" + tableName + ".data", "rw");
+        dataFile = new RandomAccessFile(prefix + databaseName + "/" + tableName + ".data", "rw");
 
+    }
+
+    //为TempTable设计的构造函数
+    public Table(boolean createNewFiles) {
+        //do nothing but initialize tree
+        index = new BPlusTree<Entry, ArrayList<Integer>>();
     }
 
     private void recover() {
@@ -127,7 +136,7 @@ public class Table {
         return newData;
     }
 
-    private ArrayList<Integer> serialize_row(Row row)
+    protected ArrayList<Integer> serialize_row(Row row)
             throws IOException {
         byte[] rowData = new byte[maxRowSize];
         Arrays.fill(rowData, (byte) 0);
@@ -155,12 +164,12 @@ public class Table {
     public void serialize_tree()
             throws IOException {
         //先检查文件是否存在
-        File treeFile = new File("data/" + databaseName + "/" + tableName + ".tree");
+        File treeFile = new File(prefix + databaseName + "/" + tableName + ".tree");
         if (!treeFile.exists()) {
             treeFile.createNewFile();
         }
 
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("data/" + databaseName + "/" + tableName + ".tree"));
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(prefix + databaseName + "/" + tableName + ".tree"));
         oos.writeObject(databaseName);
         oos.writeObject(tableName);
         oos.writeObject(columns);
@@ -172,7 +181,7 @@ public class Table {
     public BPlusTree<Entry, ArrayList<Integer>> deserialize_tree(String tableName)
             throws IOException, ClassNotFoundException {
         //创建一个ObjectInputStream输入流
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("data/" + databaseName + "/" + tableName + ".tree"));
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(prefix + databaseName + "/" + tableName + ".tree"));
         databaseName = (String) ois.readObject();
         tableName = (String) ois.readObject();
         columns = (ArrayList<Column>) ois.readObject();
@@ -276,7 +285,7 @@ public class Table {
     }
 
     //获得待操作数据的主键
-    private Entry getKey(LinkedList values) {
+    protected Entry getKey(LinkedList values) {
         Entry key = null;
         for (int i = 0; i < columns.size(); i++) {
             if (columns.get(i).isPrimary()) {
@@ -359,8 +368,12 @@ public class Table {
 
     public ArrayList<Entry> getAllRowsKey() throws SearchException, IOException {
         ArrayList<Entry> allKeys = index.getAllKeys();
-
-        return allKeys;
+        ArrayList<Entry> notnullKeys = new ArrayList<>();
+        for(Entry key: allKeys) {
+            if(key != null)
+                notnullKeys.add(key);
+        }
+        return notnullKeys;
     }
 
     public ArrayList<Entry> search(Conditions cond) throws IOException, NDException {
@@ -368,7 +381,7 @@ public class Table {
         ArrayList<Entry> res = new ArrayList<>();
         ArrayList<Entry> allRow = this.getAllRowsKey();
         for (Entry key: allRow) {
-            if (key != null && cond.satisfied(new LinkedList<String>(this.colNames),
+            if (cond.satisfied(new LinkedList<String>(this.colNames),
                     new LinkedList<ColumnType>(this.colTypes),
                     getRowAsList(key)))
                 res.add(key);

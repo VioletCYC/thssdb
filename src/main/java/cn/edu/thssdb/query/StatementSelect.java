@@ -29,6 +29,7 @@ public class StatementSelect extends AbstractStatement{
         ExecResult res;
         Object t = rv.exec(db);
         ArrayList<Table> tableList = rv.getTableList();
+        //从单张表select
         if (t instanceof Table) {
             Table table = (Table) t;
             LinkedList<String> colNames = new LinkedList<>(table.getColNames());
@@ -66,8 +67,9 @@ public class StatementSelect extends AbstractStatement{
             }
 //            table.close(false);
             return res;
-        } else
-        {
+        }
+        //从多张表select
+        else {
             TempTable tempTable = (TempTable) t;
             LinkedList<String> colNames = new LinkedList<>(tempTable.getColNames());
 //            LinkedList<Type> colTypes = new LinkedList<>(tempTable.getColTypes());
@@ -90,9 +92,9 @@ public class StatementSelect extends AbstractStatement{
             if (cond != null) {
                 cond.normalize(tableList, ignoreColumns);
             }
-            ArrayList<Entry> rowList = tempTable.search(cond);
-            for (Entry row: rowList) {
-                LinkedList data = tempTable.getRowFromFile(row);
+            ArrayList<Integer> rowNumList = tempTable.search(cond);
+            for (Integer rowNum: rowNumList) {
+                LinkedList data = tempTable.getRowAsList(rowNum);
 
                 if (!targetList.isEmpty()) {
                     if (targetList.getFirst().compareTo("*") == 0) {
