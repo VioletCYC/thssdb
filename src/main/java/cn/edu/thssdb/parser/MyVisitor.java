@@ -235,9 +235,9 @@ public class MyVisitor extends SQLBaseVisitor {
         if(ctx.getChildCount() > ctx_index+1) {
             ctx_index += 2;
             Conditions cond = (Conditions) visit(ctx.getChild(ctx_index));
-            return new StatementSelect(selected_colNames, rv, cond);
+            return new StatementSelect(selected_colNames, rv, cond, use_distinct_or_all);
         }
-        return new StatementSelect(selected_colNames, rv, null);
+        return new StatementSelect(selected_colNames, rv, null, use_distinct_or_all);
 
     }
 

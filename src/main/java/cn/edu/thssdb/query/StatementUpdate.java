@@ -4,8 +4,11 @@ import cn.edu.thssdb.exception.NDException;
 import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.schema.Entry;
 import cn.edu.thssdb.schema.Table;
+import cn.edu.thssdb.transaction.Session;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -14,6 +17,7 @@ public class StatementUpdate extends AbstractStatement{
     private LinkedList<String> colList;
     private LinkedList<Expression> exprList;
     private Conditions cond;
+    private Session session;
 
 
     public StatementUpdate(String targetTableName,
@@ -65,6 +69,17 @@ public class StatementUpdate extends AbstractStatement{
             succeed += 1;
         }
 //        targetTable.close();
+        // for log
+        //LinkedList<LinkedList> oldvalue = oldvalue;
+        //LinkedList<LinkedList> newvalue = newvalue;
+        FileOutputStream fileInputStream = new FileOutputStream(session.f);
+        ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
+        oos.writeObject(this.targetTableName);
+        oos.writeObject(3);
+        oos.writeObject((oldvalue));
+        oos.writeObject(newvalue);
+        oos.close();
+        //
 
         return new ExecResult("update " + succeed + " records!", 3, oldvalue, newvalue);
     }

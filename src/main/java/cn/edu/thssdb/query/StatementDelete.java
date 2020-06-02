@@ -4,14 +4,18 @@ import cn.edu.thssdb.exception.NullPointerException;
 import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.schema.Entry;
 import cn.edu.thssdb.schema.Table;
+import cn.edu.thssdb.transaction.Session;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class StatementDelete extends AbstractStatement{
     private String table_name;
     private Conditions cond;
+    private Session session;
 
     public StatementDelete(String table_name, Conditions cond){
         this.table_name = table_name;
@@ -48,6 +52,17 @@ public class StatementDelete extends AbstractStatement{
             allRow.add(row);
         }
 //        targetTable.close();
+        // for log
+        LinkedList<LinkedList> oldvalue = allRow;
+        LinkedList<LinkedList> newvalue = null;
+        FileOutputStream fileInputStream = new FileOutputStream(session.f);
+        ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
+        oos.writeObject(this.table_name);
+        oos.writeObject(2);
+        oos.writeObject((oldvalue));
+        oos.writeObject(newvalue);
+        oos.close();
+        //
 
         return new ExecResult("Delete " + succeed + " rows.", 2, allRow, null);
     }

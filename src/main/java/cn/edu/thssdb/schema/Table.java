@@ -11,8 +11,10 @@ import cn.edu.thssdb.utils.mNumber;
 import javafx.util.Pair;
 
 import java.io.*;
-import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
@@ -285,7 +287,7 @@ public class Table {
     }
 
     //获得待操作数据的主键
-    protected Entry getKey(LinkedList values) {
+    public Entry getKey(LinkedList values) {
         Entry key = null;
         for (int i = 0; i < columns.size(); i++) {
             if (columns.get(i).isPrimary()) {

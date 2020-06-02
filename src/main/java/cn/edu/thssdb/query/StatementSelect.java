@@ -14,13 +14,16 @@ public class StatementSelect extends AbstractStatement{
     private LinkedList<String> targetList;
     private RangeVariable rv;
     private Conditions cond;
+    boolean distinct;
 
     public StatementSelect(LinkedList<String> targetList,
                            RangeVariable rv,
-                           Conditions cond) {
+                           Conditions cond,
+                           boolean distinct) {
         this.targetList = targetList;
         this.rv = rv;
         this.cond = cond;
+        this.distinct = distinct;
     }
 
     @Override
@@ -55,14 +58,14 @@ public class StatementSelect extends AbstractStatement{
 
                 if (!targetList.isEmpty()) {
                     if (targetList.getFirst().compareTo("*") == 0) {
-                        res.insert(data);
+                        res.insert(data, distinct);
                     } else
                     {
-                        res.insert(colNames, data, tableList, null);
+                        res.insert(colNames, data, tableList, null, distinct);
                     }
                 } else
                 {
-                    res.insert(new LinkedList());
+                    res.insert(new LinkedList(), distinct);
                 }
             }
 //            table.close(false);
@@ -98,14 +101,14 @@ public class StatementSelect extends AbstractStatement{
 
                 if (!targetList.isEmpty()) {
                     if (targetList.getFirst().compareTo("*") == 0) {
-                        res.insert(colNames, data, ignoreColumns);
+                        res.insert(colNames, data, ignoreColumns, distinct);
                     } else
                     {
-                        res.insert(colNames, data, tableList, ignoreColumns);
+                        res.insert(colNames, data, tableList, ignoreColumns, distinct);
                     }
                 } else
                 {
-                    res.insert(new LinkedList());
+                    res.insert(new LinkedList(), distinct);
                 }
             }
             tempTable.close();

@@ -3,8 +3,10 @@ package cn.edu.thssdb.query;
 
 import cn.edu.thssdb.exception.NameNotExistException;
 import cn.edu.thssdb.schema.Table;
+import cn.edu.thssdb.transaction.Session;
 import cn.edu.thssdb.type.ColumnType;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -16,6 +18,7 @@ public class ExecResult {
     private LinkedList<LinkedList> newValue;
     private String msg;
     private int type;      //1: insert  2:delete   3:update
+    private Session session;
 
     public ExecResult() {
         this.colNames = new LinkedList<>();
@@ -31,11 +34,20 @@ public class ExecResult {
     //insert 传入newvalue为一行插入的值
     //delete 传入oldvalue为多行删除的值
     //updat  传入oldvalue为多行删除的值，传入newvalue为多行插入的值
-    public ExecResult(String msg, int type, LinkedList<LinkedList> oldvalue, LinkedList<LinkedList> newvalue) {
+    public ExecResult(String msg, int type, LinkedList<LinkedList> oldvalue, LinkedList<LinkedList> newvalue) throws IOException {
         this.type = type;
         this.msg = msg;
         this.oldValue = oldvalue;
         this.newValue = newvalue;
+        /*
+        Writer out =  new FileWriter(session.f);
+        out.write(type);
+        out.write(" ");
+        out.write(String.valueOf(oldvalue));
+        out.write(" ");
+        out.write(String.valueOf(newvalue));
+        out.write("\n");
+        out.close();*/
     }
 
     //for  showTable
@@ -61,17 +73,18 @@ public class ExecResult {
     }
 
 
-    public void insert(LinkedList<String> allNames, LinkedList curData, LinkedList<String> ignoreNames){
+    public void insert(LinkedList<String> allNames, LinkedList curData, LinkedList<String> ignoreNames, boolean distinct) throws IOException {
         LinkedList data = new LinkedList<>();
         int n = allNames.size();
         for (int i = 0; i < n; ++i) {
             if (ignoreNames.indexOf(allNames.get(i)) < 0)
                 data.add(curData.get(i));
         }
-        dataList.add(data);
+        insert(data, distinct);
+
     }
 
-    public void insert(LinkedList<String> curNames, LinkedList curData, ArrayList<Table> tableList, LinkedList<String> ignoreNames) {
+    public void insert(LinkedList<String> curNames, LinkedList curData, ArrayList<Table> tableList, LinkedList<String> ignoreNames, boolean distinct) throws IOException {
         LinkedList data = new LinkedList();
         for (String colName: this.colNames) {
             Expression tmp = new Expression(1, colName);
@@ -83,11 +96,29 @@ public class ExecResult {
             }
             data.add(curData.get(idx));
         }
-        insert(data);
+        insert(data, distinct);
     }
 
-    public void insert(LinkedList data) {
-        dataList.add(data);
+    public void insert(LinkedList data, boolean distinct) throws IOException {
+        boolean is_duplicate = false;
+        if(distinct) {
+            for(LinkedList values: dataList) {
+                is_duplicate = true;
+                for(int i = 0; i < values.size(); i++) {
+                    if(!values.get(i).equals(data.get(i))) {
+                        is_duplicate = false;
+                        break;
+                    }
+                }
+                if(is_duplicate)
+                    break;
+            }
+        }
+        if(!is_duplicate){
+            dataList.add(data);
+        }
+
+
     }
 
     public void show() {

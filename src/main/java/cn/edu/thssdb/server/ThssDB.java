@@ -3,6 +3,7 @@ package cn.edu.thssdb.server;
 import cn.edu.thssdb.rpc.thrift.IService;
 import cn.edu.thssdb.schema.Manager;
 import cn.edu.thssdb.service.IServiceHandler;
+import cn.edu.thssdb.transaction.TransactionManager2PL;
 import cn.edu.thssdb.utils.Global;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
@@ -21,6 +22,7 @@ public class ThssDB {
   private static TServer server;
 
   private Manager manager;
+  private TransactionManager2PL transactionManager;
 
   public static ThssDB getInstance() {
     return ThssDBHolder.INSTANCE;
