@@ -1,5 +1,6 @@
 package cn.edu.thssdb.server;
 
+import cn.edu.thssdb.rpc.thrift.ExecuteStatementResp;
 import cn.edu.thssdb.rpc.thrift.IService;
 import cn.edu.thssdb.schema.Manager;
 import cn.edu.thssdb.service.IServiceHandler;
@@ -50,6 +51,7 @@ public class ThssDB {
       logger.error(e.getMessage());
     }
   }
+
 
   private static class ThssDBHolder {
     private static final ThssDB INSTANCE = new ThssDB();

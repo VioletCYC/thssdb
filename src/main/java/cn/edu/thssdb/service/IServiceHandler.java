@@ -1,18 +1,13 @@
 package cn.edu.thssdb.service;
 
-import cn.edu.thssdb.rpc.thrift.ConnectReq;
-import cn.edu.thssdb.rpc.thrift.ConnectResp;
-import cn.edu.thssdb.rpc.thrift.DisconnetResp;
-import cn.edu.thssdb.rpc.thrift.ExecuteStatementReq;
-import cn.edu.thssdb.rpc.thrift.ExecuteStatementResp;
-import cn.edu.thssdb.rpc.thrift.GetTimeReq;
-import cn.edu.thssdb.rpc.thrift.GetTimeResp;
-import cn.edu.thssdb.rpc.thrift.IService;
-import cn.edu.thssdb.rpc.thrift.Status;
+import cn.edu.thssdb.rpc.thrift.*;
 import cn.edu.thssdb.utils.Global;
 import org.apache.thrift.TException;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 public class IServiceHandler implements IService.Iface {
 
@@ -31,14 +26,24 @@ public class IServiceHandler implements IService.Iface {
   }
 
   @Override
-  public DisconnetResp disconnect(DisconnetResp req) throws TException {
+  public DisconnectResp disconnect(DisconnectReq req) throws TException {
     // TODO
     return null;
   }
 
   @Override
   public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
-    // TODO
-    return null;
+    //TODO: 处理传来的字符串 req_text，执行完后得到 ExecResult，根据内容创建 ExecuteStatementResp对象返回
+    String req_text = req.getStatement();
+    System.out.println(req_text);
+
+    //TODO： 示例
+    ExecuteStatementResp resp = new ExecuteStatementResp();
+    List<String> data = new ArrayList<String>();
+    data.add("ID");
+    data.add("name");
+    resp.setColumnsList(data);
+    resp.setStatus(new Status(Global.SUCCESS_CODE));
+    return resp;
   }
 }

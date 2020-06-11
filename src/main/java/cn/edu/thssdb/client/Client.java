@@ -1,5 +1,7 @@
 package cn.edu.thssdb.client;
 
+import cn.edu.thssdb.rpc.thrift.ExecuteStatementReq;
+import cn.edu.thssdb.rpc.thrift.ExecuteStatementResp;
 import cn.edu.thssdb.rpc.thrift.GetTimeReq;
 import cn.edu.thssdb.rpc.thrift.IService;
 import cn.edu.thssdb.utils.Global;
@@ -69,7 +71,8 @@ public class Client {
             open = false;
             break;
           default:
-            println("Invalid statements!");
+            //println("Invalid statements!");
+            execStatement(msg);
             break;
         }
         long endTime = System.currentTimeMillis();
@@ -89,6 +92,20 @@ public class Client {
     try {
       println(client.getTime(req).getTime());
     } catch (TException e) {
+      logger.error(e.getMessage());
+    }
+  }
+
+  private static void execStatement(String msg) {
+    //TODO 根据ExecuteStatementResp的内容显示
+
+    long session_tem = 1;
+    ExecuteStatementReq req = new ExecuteStatementReq(1, msg);
+    System.out.println("send!");
+    try {
+      System.out.println(client.executeStatement(req).getColumnsList());
+    } catch (TException e) {
+      e.printStackTrace();
       logger.error(e.getMessage());
     }
   }
