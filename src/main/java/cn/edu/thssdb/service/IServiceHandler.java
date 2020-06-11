@@ -1,5 +1,6 @@
 package cn.edu.thssdb.service;
 
+import cn.edu.thssdb.exception.NDException;
 import cn.edu.thssdb.rpc.thrift.*;
 import cn.edu.thssdb.utils.Global;
 import org.apache.thrift.TException;
@@ -22,17 +23,25 @@ public class IServiceHandler implements IService.Iface {
   @Override
   public ConnectResp connect(ConnectReq req) throws TException {
     // TODO
-    return null;
+    ConnectResp resp = new ConnectResp();
+    resp.setSessionId(Global.SessionID);
+    resp.setStatus(new Status(Global.SUCCESS_CODE));
+    return resp;
   }
 
   @Override
   public DisconnectResp disconnect(DisconnectReq req) throws TException {
     // TODO
-    return null;
+    DisconnectResp resp = new DisconnectResp();
+    resp.setStatus(new Status(Global.SUCCESS_CODE));
+    return resp;
   }
 
   @Override
   public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
+    if(req.getSessionId() != Global.SessionID)
+      throw new NDException("Please first connect to database!");
+
     //TODO: 处理传来的字符串 req_text，执行完后得到 ExecResult，根据内容创建 ExecuteStatementResp对象返回
     String req_text = req.getStatement();
     System.out.println(req_text);

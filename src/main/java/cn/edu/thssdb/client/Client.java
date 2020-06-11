@@ -1,9 +1,6 @@
 package cn.edu.thssdb.client;
 
-import cn.edu.thssdb.rpc.thrift.ExecuteStatementReq;
-import cn.edu.thssdb.rpc.thrift.ExecuteStatementResp;
-import cn.edu.thssdb.rpc.thrift.GetTimeReq;
-import cn.edu.thssdb.rpc.thrift.IService;
+import cn.edu.thssdb.rpc.thrift.*;
 import cn.edu.thssdb.utils.Global;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -20,6 +17,10 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.PrintStream;
 import java.util.Scanner;
 
@@ -35,6 +36,7 @@ public class Client {
 
   static final String PORT_ARGS = "p";
   static final String PORT_NAME = "port";
+  private long sid = 0;
 
   private static final PrintStream SCREEN_PRINTER = new PrintStream(System.out);
   private static final Scanner SCANNER = new Scanner(System.in);
@@ -50,14 +52,19 @@ public class Client {
       showHelp();
       return;
     }
+
+    Client c = new Client();
+
     try {
       echoStarting();
       String host = commandLine.getOptionValue(HOST_ARGS, Global.DEFAULT_SERVER_HOST);
       int port = Integer.parseInt(commandLine.getOptionValue(PORT_ARGS, String.valueOf(Global.DEFAULT_SERVER_PORT)));
+      System.out.println(host + " " + port);
       transport = new TSocket(host, port);
       transport.open();
       protocol = new TBinaryProtocol(transport);
       client = new IService.Client(protocol);
+
       boolean open = true;
       while (true) {
         print(Global.CLI_PREFIX);
@@ -70,9 +77,15 @@ public class Client {
           case Global.QUIT:
             open = false;
             break;
+          case Global.CONNECT:
+            c.getSessionID();
+            break;
+          case Global.DISCONNECT:
+            c.cancelSessionID();
+            break;
           default:
             //println("Invalid statements!");
-            execStatement(msg);
+            c.execStatement(msg);
             break;
         }
         long endTime = System.currentTimeMillis();
@@ -96,14 +109,79 @@ public class Client {
     }
   }
 
-  private static void execStatement(String msg) {
+  private void getSessionID() {
+    ConnectReq req = new ConnectReq("username", "password");
+    try {
+      ConnectResp resp = client.connect(req);
+      if (resp.getStatus().code == Global.SUCCESS_CODE){
+        sid = resp.getSessionId();
+        println("Connect Successfully!");
+      }
+      else{
+        println("Connection Fail!");
+      }
+    } catch (TException e) {
+      logger.error(e.getMessage());
+    }
+  }
+
+  private void cancelSessionID() {
+    DisconnectReq req = new DisconnectReq(sid);
+    try {
+      DisconnectResp resp = client.disconnect(req);
+      if (resp.getStatus().code == Global.SUCCESS_CODE){
+        sid = 0;
+        println("Disconnect Successfully!");
+      }
+      else{
+        println("Disconnection Fail!");
+      }
+    } catch (TException e) {
+      logger.error(e.getMessage());
+    }
+  }
+
+  private void execStatement(String msg) {
     //TODO 根据ExecuteStatementResp的内容显示
 
-    long session_tem = 1;
-    ExecuteStatementReq req = new ExecuteStatementReq(1, msg);
+    ExecuteStatementReq req = new ExecuteStatementReq(sid, msg);
     System.out.println("send!");
     try {
       System.out.println(client.executeStatement(req).getColumnsList());
+      JFrame f = new JFrame();
+      Object[][] playerInfo = {
+              // 创建表格中的数据
+              { "王鹏", new Integer(91), new Integer(100), new Integer(191),
+                      new Boolean(true) },
+              { "朱学莲", new Integer(82), new Integer(69), new Integer(151),
+                      new Boolean(true) },
+              { "梅婷", new Integer(47), new Integer(57), new Integer(104),
+                      new Boolean(false) },
+              { "赵龙", new Integer(61), new Integer(57), new Integer(118),
+                      new Boolean(false) },
+              { "李兵", new Integer(90), new Integer(87), new Integer(177),
+                      new Boolean(true) }, };
+      // 创建表格中的横标题
+      String[] Names = { "姓名", "语文", "数学", "总分", "及格" };
+
+      // 以Names和playerInfo为参数，创建一个表格
+      JTable table = new JTable(playerInfo, Names);
+      // 设置此表视图的首选大小
+      table.setPreferredScrollableViewportSize(new Dimension(550, 100));
+      // 将表格加入到滚动条组件中
+      JScrollPane scrollPane = new JScrollPane(table);
+      f.getContentPane().add(scrollPane, BorderLayout.CENTER);
+      // 再将滚动条组件添加到中间容器中
+      f.setTitle("操作结果");
+      f.pack();
+      f.setVisible(true);
+      f.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosing(WindowEvent e) {
+          f.dispose();
+        }
+      });
+
     } catch (TException e) {
       e.printStackTrace();
       logger.error(e.getMessage());
