@@ -2,6 +2,8 @@ package cn.edu.thssdb.service;
 
 import cn.edu.thssdb.exception.NDException;
 import cn.edu.thssdb.rpc.thrift.*;
+import cn.edu.thssdb.schema.Database;
+import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Global;
 import org.apache.thrift.TException;
 
@@ -46,6 +48,14 @@ public class IServiceHandler implements IService.Iface {
     String req_text = req.getStatement();
     System.out.println(req_text);
 
+    ThssDB thssDB = ThssDB.getInstance();
+    Database db = thssDB.getDatabase();
+    String name = "lol";
+    thssDB.createDatabase(name);
+    thssDB.deleteDatabase(name);
+    thssDB.switchDatabase(name);
+
+    
     //TODO： 示例
     ExecuteStatementResp resp = new ExecuteStatementResp();
     List<String> data = new ArrayList<String>();

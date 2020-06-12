@@ -2,6 +2,7 @@ package cn.edu.thssdb.server;
 
 import cn.edu.thssdb.rpc.thrift.ExecuteStatementResp;
 import cn.edu.thssdb.rpc.thrift.IService;
+import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.schema.Manager;
 import cn.edu.thssdb.service.IServiceHandler;
 import cn.edu.thssdb.transaction.TransactionManager2PL;
@@ -12,6 +13,8 @@ import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.crypto.Data;
 
 public class ThssDB {
 
@@ -24,6 +27,7 @@ public class ThssDB {
 
   private Manager manager;
   private TransactionManager2PL transactionManager;
+  private Database database;
 
   public static ThssDB getInstance() {
     return ThssDBHolder.INSTANCE;
@@ -31,6 +35,7 @@ public class ThssDB {
 
   public static void main(String[] args) {
     ThssDB server = ThssDB.getInstance();
+    Manager manager = new Manager();
     server.start();
   }
 
@@ -52,6 +57,23 @@ public class ThssDB {
     }
   }
 
+  public Database createDatabase(String name) {
+    database = manager.createDatabaseIfNotExists(name);
+    return manager.createDatabaseIfNotExists(name);
+  }
+
+  public Database switchDatabase(String name){
+    database = manager.switchDatabase(name);
+    return manager.switchDatabase(name);
+  }
+
+  public void deleteDatabase(String name){
+    manager.deleteDatabase(name);
+  }
+
+  public Database getDatabase() {
+    return database;
+  }
 
   private static class ThssDBHolder {
     private static final ThssDB INSTANCE = new ThssDB();

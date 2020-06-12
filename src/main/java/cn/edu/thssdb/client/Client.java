@@ -59,7 +59,7 @@ public class Client {
       echoStarting();
       String host = commandLine.getOptionValue(HOST_ARGS, Global.DEFAULT_SERVER_HOST);
       int port = Integer.parseInt(commandLine.getOptionValue(PORT_ARGS, String.valueOf(Global.DEFAULT_SERVER_PORT)));
-      System.out.println(host + " " + port);
+      //System.out.println(host + " " + port);
       transport = new TSocket(host, port);
       transport.open();
       protocol = new TBinaryProtocol(transport);
