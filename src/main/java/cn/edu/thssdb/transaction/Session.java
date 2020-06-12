@@ -39,6 +39,8 @@ public class Session{
         this.TableForRead = new ArrayList<>();
         this.result = new LinkedList<>();
         this.f = new File(prefix + id +".log");
+//        if(!f.exists())
+//            f.createNewFile();
     }
 
     public void AddInsert(StatementInsert cs){

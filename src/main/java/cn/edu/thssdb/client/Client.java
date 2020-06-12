@@ -2,6 +2,7 @@ package cn.edu.thssdb.client;
 
 import cn.edu.thssdb.rpc.thrift.*;
 import cn.edu.thssdb.utils.Global;
+import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -17,11 +18,15 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.Name;
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+import java.util.LinkedList;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Client {
@@ -59,7 +64,7 @@ public class Client {
       echoStarting();
       String host = commandLine.getOptionValue(HOST_ARGS, Global.DEFAULT_SERVER_HOST);
       int port = Integer.parseInt(commandLine.getOptionValue(PORT_ARGS, String.valueOf(Global.DEFAULT_SERVER_PORT)));
-      //System.out.println(host + " " + port);
+      System.out.println(host + " " + port);
       transport = new TSocket(host, port);
       transport.open();
       protocol = new TBinaryProtocol(transport);
@@ -82,6 +87,11 @@ public class Client {
             break;
           case Global.DISCONNECT:
             c.cancelSessionID();
+            break;
+          // TODO: Delete this!
+          // 为了调用测试语句
+          case "fortest":
+            c.test();
             break;
           default:
             //println("Invalid statements!");
@@ -145,42 +155,68 @@ public class Client {
     //TODO 根据ExecuteStatementResp的内容显示
 
     ExecuteStatementReq req = new ExecuteStatementReq(sid, msg);
-    System.out.println("send!");
+//    System.out.println("send!");
     try {
-      System.out.println(client.executeStatement(req).getColumnsList());
-      JFrame f = new JFrame();
-      Object[][] playerInfo = {
-              // 创建表格中的数据
-              { "王鹏", new Integer(91), new Integer(100), new Integer(191),
-                      new Boolean(true) },
-              { "朱学莲", new Integer(82), new Integer(69), new Integer(151),
-                      new Boolean(true) },
-              { "梅婷", new Integer(47), new Integer(57), new Integer(104),
-                      new Boolean(false) },
-              { "赵龙", new Integer(61), new Integer(57), new Integer(118),
-                      new Boolean(false) },
-              { "李兵", new Integer(90), new Integer(87), new Integer(177),
-                      new Boolean(true) }, };
-      // 创建表格中的横标题
-      String[] Names = { "姓名", "语文", "数学", "总分", "及格" };
-
-      // 以Names和playerInfo为参数，创建一个表格
-      JTable table = new JTable(playerInfo, Names);
-      // 设置此表视图的首选大小
-      table.setPreferredScrollableViewportSize(new Dimension(550, 100));
-      // 将表格加入到滚动条组件中
-      JScrollPane scrollPane = new JScrollPane(table);
-      f.getContentPane().add(scrollPane, BorderLayout.CENTER);
-      // 再将滚动条组件添加到中间容器中
-      f.setTitle("操作结果");
-      f.pack();
-      f.setVisible(true);
-      f.addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowClosing(WindowEvent e) {
-          f.dispose();
+      ExecuteStatementResp result = client.executeStatement(req);
+      //如果有select数据，就显示
+      if(result.isHasResult()) {
+        int colSize = result.getColumnsListSize();
+        int rowSize = result.getRowListSize();
+        String[] Names = new String[colSize];
+        for(int i = 0; i < Names.length; i++) {
+          Names[i] = result.getColumnsList().get(i);
         }
-      });
+        String[][] playerInfo = new String[rowSize][colSize];
+        for(int i = 0; i < rowSize; i++) {
+          for(int j = 0; j < colSize; j++) {
+            playerInfo[i][j] = result.getRowList().get(i).get(j);
+          }
+        }
+//        Object[][] playerInfo = {
+//                // 创建表格中的数据
+//                { "王鹏", new Integer(91), new Integer(100), new Integer(191),
+//                        new Boolean(true) },
+//                { "朱学莲", new Integer(82), new Integer(69), new Integer(151),
+//                        new Boolean(true) },
+//                { "梅婷", new Integer(47), new Integer(57), new Integer(104),
+//                        new Boolean(false) },
+//                { "赵龙", new Integer(61), new Integer(57), new Integer(118),
+//                        new Boolean(false) },
+//                { "李兵", new Integer(90), new Integer(87), new Integer(177),
+//                        new Boolean(true) }, };
+//        // 创建表格中的横标题
+//        String[] Names = { "姓名", "语文", "数学", "总分", "及格" };
+
+        // 以Names和playerInfo为参数，创建一个表格
+        JFrame f = new JFrame();
+        JTable table = new JTable(playerInfo, Names);
+        // 设置此表视图的首选大小
+        table.setPreferredScrollableViewportSize(new Dimension(550, 100));
+        // 将表格加入到滚动条组件中
+        JScrollPane scrollPane = new JScrollPane(table);
+        f.getContentPane().add(scrollPane, BorderLayout.CENTER);
+        // 再将滚动条组件添加到中间容器中
+        f.setTitle("操作结果");
+        f.pack();
+        f.setVisible(true);
+        f.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosing(WindowEvent e) {
+            f.dispose();
+          }
+        });
+      }
+      //执行出错：输出错误信息
+      else if(result.isIsAbort()) {
+        System.out.println("Error! "+result.getErrorInfo());
+      }
+      //其它操作语句：输出操作结果
+      else if(result.getResultInfo() != null) {
+        List<String> infos = result.getResultInfo();
+        for(String info: infos) {
+          System.out.println(info);
+        }
+      }
 
     } catch (TException e) {
       e.printStackTrace();
@@ -249,5 +285,32 @@ public class Client {
 
   static void println(String msg) {
     SCREEN_PRINTER.println(msg);
+  }
+
+  public void test() {
+    ArrayList<String> inputs = new ArrayList<>();
+    inputs.add("CREATE DATABASE testdb;"+"CREATE TABLE person (name String(256), ID Int not null, PRIMARY KEY(ID));"+"CREATE TABLE course (stu_name String(256), course_name String(128) not null, PRIMARY KEY(course_name));"+"CREATE TABLE teach (ID Int not null, t_name String(256), course_name String(128) not null, s_name String(128), PRIMARY KEY(ID));");
+    inputs.add("insert into person (name, ID) values ('Bob', 15);");
+    inputs.add("insert into person values ('Allen', 22);");
+    inputs.add("insert into person values ('Nami', 18);");
+    inputs.add("insert into person (ID) values (23);");
+    inputs.add("insert into course values ('Allen', 'RENZHIDAO');");
+    inputs.add("insert into course values ('Allen', 'RUANJIANFENXI');");
+    inputs.add("insert into course values ('Bob', 'SHUJUKU');");
+    inputs.add("insert into teach values (1, 'JiLiang', 'YIDONG', 'Allen');");
+    inputs.add("insert into teach values (2, 'JianMin', 'SHUJUKU', 'Bob');");
+    inputs.add("insert into teach values (3, 'JianMin', 'SHUJUKU', 'Zera');");
+    inputs.add("insert into teach values (4, 'ChunPing', 'RENZHIDAO', 'Allen');");
+//        inputs.add("update person set name = 'Emily' where name = 'Bob';");
+    inputs.add("select * from person;");
+//        inputs.add("select * from course where stu_name = 'Allen';");
+//        inputs.add("select ID from person join course on person.name=course.stu_name;");
+//    inputs.add("select distinct person.name, course.course_name from person join course on person.name=course.stu_name join teach on person.name=teach.s_name;");
+    inputs.add("delete from person where ID = 15;");
+    inputs.add("drop table person;");
+
+    for(String input: inputs) {
+      execStatement(input);
+    }
   }
 }

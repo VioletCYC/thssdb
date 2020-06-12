@@ -52,6 +52,27 @@ public class SQLBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements SQ
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitTransac_stmt(SQLParser.Transac_stmtContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitBegin_transaction(SQLParser.Begin_transactionContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitEnd_transaction(SQLParser.End_transactionContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitCreate_user_stmt(SQLParser.Create_user_stmtContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

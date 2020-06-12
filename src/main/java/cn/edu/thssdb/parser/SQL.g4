@@ -9,6 +9,7 @@ sql_stmt_list :
 sql_stmt :
     create_table_stmt
     | create_db_stmt
+    | transac_stmt
     | create_user_stmt
     | drop_db_stmt
     | drop_user_stmt
@@ -25,13 +26,24 @@ sql_stmt :
     | show_table_stmt
     | show_meta_stmt
     | quit_stmt
-    | update_stmt ;
+    | update_stmt;
+
 
 create_db_stmt :
     K_CREATE K_DATABASE database_name ;
 
 drop_db_stmt :
     K_DROP K_DATABASE ( K_IF K_EXISTS )? database_name ;
+
+transac_stmt :
+    begin_transaction
+    | end_transaction ;
+
+begin_transaction:
+    K_BEGIN K_TRANSACTION ;
+
+end_transaction:
+    K_COMMIT ;
 
 create_user_stmt :
     K_CREATE K_USER user_name K_IDENTIFIED K_BY password ;
@@ -225,6 +237,9 @@ K_USER : U S E R;
 K_VALUES : V A L U E S;
 K_VIEW : V I E W;
 K_WHERE : W H E R E;
+K_BEGIN : B E G I N;
+K_TRANSACTION : T R A N S A C T I O N;
+K_COMMIT : C O M M I T;
 
 IDENTIFIER :
     [a-zA-Z_] [a-zA-Z_0-9]* ;

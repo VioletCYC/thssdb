@@ -18,7 +18,7 @@ public class StatementInsert extends AbstractStatement{
     private LinkedList<String> col;
     private Session session;
 
-    public StatementInsert(String table_name, LinkedList value){
+    public StatementInsert(String table_name, LinkedList value) {
         this.table_name = table_name;
         this.values = value;
     }
@@ -70,16 +70,16 @@ public class StatementInsert extends AbstractStatement{
         LinkedList<LinkedList> insertRow = new LinkedList<>();
         insertRow.add(values);
 
-        // for log
-        LinkedList<LinkedList> oldvalue = null;
-        LinkedList<LinkedList> newvalue = insertRow;
-        FileOutputStream fileInputStream = new FileOutputStream(session.f);
-        ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
-        oos.writeObject(this.table_name);
-        oos.writeObject(1);
-        oos.writeObject((oldvalue));
-        oos.writeObject(newvalue);
-        oos.close();
+        // TODO: 写log
+//        LinkedList<LinkedList> oldvalue = null;
+//        LinkedList<LinkedList> newvalue = insertRow;
+//        FileOutputStream fileInputStream = new FileOutputStream(session.f);
+//        ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
+//        oos.writeObject(this.table_name);
+//        oos.writeObject(1);
+//        oos.writeObject((oldvalue));
+//        oos.writeObject(newvalue);
+//        oos.close();
         //
 
         return new ExecResult("insert " + succeed + " rows!", 1, null, insertRow);

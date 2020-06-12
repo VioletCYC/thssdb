@@ -43,6 +43,36 @@ public class MyVisitor extends SQLBaseVisitor {
     }
 
     @Override
+    public Object visitCreate_db_stmt(SQLParser.Create_db_stmtContext ctx) {
+        String dbname = (String) visit(ctx.getChild(2));
+        return new StatementDatabase(dbname, 1);
+    }
+
+    @Override
+    public Object visitUse_db_stmt(SQLParser.Use_db_stmtContext ctx) {
+        String dbname = (String) visit(ctx.getChild(1));
+        return new StatementDatabase(dbname, 2);
+    }
+
+    @Override
+    public Object visitDrop_db_stmt(SQLParser.Drop_db_stmtContext ctx) {
+        String dbname;
+        //含有if exists
+        if(ctx.getChildCount() == 5) {
+            dbname = (String) visit(ctx.getChild(4));
+        }
+        else {
+            dbname = (String) visit(ctx.getChild(2));
+        }
+        return new StatementDatabase(dbname, 3);
+    }
+
+    @Override
+    public Object visitDatabase_name(SQLParser.Database_nameContext ctx) {
+        return (String) ctx.getChild(0).toString().toUpperCase();
+    }
+
+    @Override
     public Object visitCreate_table_stmt(SQLParser.Create_table_stmtContext ctx) {
         String tableName = (String) visit(ctx.getChild(2));
         int n = ctx.getChildCount();
@@ -444,5 +474,30 @@ public class MyVisitor extends SQLBaseVisitor {
         //TODO: 会有其他情况吗？
         else
             return false;
+    }
+
+    //transaction
+
+    @Override
+    public Object visitTransac_stmt(SQLParser.Transac_stmtContext ctx) {
+        String trans = (String) visit(ctx.getChild(0));
+        if(trans.equals("BEGIN TRANSACTION")) {
+
+        }
+        else {
+
+        }
+        //TODO: 如何返回？
+        return null;
+    }
+
+    @Override
+    public Object visitBegin_transaction(SQLParser.Begin_transactionContext ctx) {
+        return "BEGIN TRANSACTION";
+    }
+
+    @Override
+    public Object visitEnd_transaction(SQLParser.End_transactionContext ctx) {
+        return "COMMIT";
     }
 }

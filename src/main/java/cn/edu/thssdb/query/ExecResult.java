@@ -9,6 +9,7 @@ import cn.edu.thssdb.type.ColumnType;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 public class ExecResult {
     private LinkedList<String> colNames;
@@ -26,7 +27,7 @@ public class ExecResult {
     }
 
     //for  createTable  dropTable
-    public ExecResult(String msg){
+    public ExecResult(String msg) {
         this.msg = msg;
     }
 
@@ -66,7 +67,7 @@ public class ExecResult {
     //for  select
     public ExecResult(LinkedList<String> colNames, LinkedList<String> ignoreNames) {
         this.colNames = new LinkedList<>(colNames);
-        for (String ignoreName: ignoreNames) {
+        for (String ignoreName : ignoreNames) {
             this.colNames.remove(ignoreName);
         }
         this.dataList = new LinkedList<>();
@@ -86,7 +87,7 @@ public class ExecResult {
 
     public void insert(LinkedList<String> curNames, LinkedList curData, ArrayList<Table> tableList, LinkedList<String> ignoreNames, boolean distinct) throws IOException {
         LinkedList data = new LinkedList();
-        for (String colName: this.colNames) {
+        for (String colName : this.colNames) {
             Expression tmp = new Expression(1, colName);
             tmp.normalize(tableList, ignoreNames);
             String tableCol = tmp.getSymbol();
@@ -101,20 +102,20 @@ public class ExecResult {
 
     public void insert(LinkedList data, boolean distinct) throws IOException {
         boolean is_duplicate = false;
-        if(distinct) {
-            for(LinkedList values: dataList) {
+        if (distinct) {
+            for (LinkedList values : dataList) {
                 is_duplicate = true;
-                for(int i = 0; i < values.size(); i++) {
-                    if(!values.get(i).equals(data.get(i))) {
+                for (int i = 0; i < values.size(); i++) {
+                    if (!values.get(i).equals(data.get(i))) {
                         is_duplicate = false;
                         break;
                     }
                 }
-                if(is_duplicate)
+                if (is_duplicate)
                     break;
             }
         }
-        if(!is_duplicate){
+        if (!is_duplicate) {
             dataList.add(data);
         }
 
@@ -122,12 +123,12 @@ public class ExecResult {
     }
 
     public void show() {
-        for (String colName: colNames) {
+        for (String colName : colNames) {
             System.out.printf("%15s ", colName);
         }
         System.out.println();
-        for (LinkedList line: dataList) {
-            for (Object o: line) {
+        for (LinkedList line : dataList) {
+            for (Object o : line) {
                 if (o == null) {
                     System.out.printf("           null ");
                 } else
@@ -142,21 +143,20 @@ public class ExecResult {
         int i = 0;
         int len = this.colNames.size();
 
-        for (String name: this.colNames) {
+        for (String name : this.colNames) {
             if (i == len - 1) buffer.append(name + "\n");
             else buffer.append(name + "|");
             i++;
         }
 
-        for (LinkedList line: this.dataList) {
+        for (LinkedList line : this.dataList) {
             i = 0;
             len = line.size();
-            for (Object obj: line) {
+            for (Object obj : line) {
                 if (i == len - 1) {
                     if (obj == null) buffer.append("null\n");
                     else buffer.append(obj.toString() + "\n");
-                }
-                else {
+                } else {
                     if (obj == null) buffer.append("null|");
                     else buffer.append(obj.toString() + "|");
                 }
@@ -173,8 +173,30 @@ public class ExecResult {
     public LinkedList<LinkedList> getDataList() {
         return dataList;
     }
+    public List<List<String>>  getDataListAsList() {
+        List<List<String>> lists = new LinkedList<>();
+        for(int i = 0; i < dataList.size(); i++) {
+            lists.add(new LinkedList<>());
+            for(int j = 0; j < dataList.get(i).size(); j++) {
+                Object value = dataList.get(i).get(j);
+                if(value == null)
+                    lists.get(i).add("null");
+                else
+                    lists.get(i).add(value.toString());
+            }
+        }
+        return lists;
+    }
 
-    public LinkedList<LinkedList> getOldValue(){return oldValue;}
+    public LinkedList<LinkedList> getOldValue() {
+        return oldValue;
+    }
 
-    public LinkedList<LinkedList> getNewValue(){return newValue;}
+    public LinkedList<LinkedList> getNewValue() {
+        return newValue;
+    }
+
+    public String getMsg() {
+        return msg;
+    }
 }

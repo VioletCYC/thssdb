@@ -33,9 +33,13 @@ public class ThssDB {
     return ThssDBHolder.INSTANCE;
   }
 
+  private ThssDB() {
+    manager = new Manager();
+  }
+
   public static void main(String[] args) {
     ThssDB server = ThssDB.getInstance();
-    Manager manager = new Manager();
+//    Manager manager = new Manager();
     server.start();
   }
 
@@ -59,7 +63,7 @@ public class ThssDB {
 
   public Database createDatabase(String name) {
     database = manager.createDatabaseIfNotExists(name);
-    return manager.createDatabaseIfNotExists(name);
+    return database;
   }
 
   public Database switchDatabase(String name){
