@@ -72,8 +72,10 @@ public class IServiceHandler implements IService.Iface {
     MyVisitor visitor = new MyVisitor();
     ArrayList res = (ArrayList) visitor.visit(parser.parse());
 
+    /*
     if(database == null)
       database = server.getDatabase();
+*/
 
     //如果第一条语句是begin transaction
     try{
@@ -93,9 +95,11 @@ public class IServiceHandler implements IService.Iface {
             Session session = new Session(database, sid);
 
             System.out.println("sign2!");
+
             //将中间语句逐条加入session中
             for(int i=1; i<count; i++){
               Object cs = res.get(i);
+              System.out.println(cs.getClass());
               if(cs instanceof StatementInsert)
                 session.AddInsert((StatementInsert)cs);
               else if(cs instanceof StatementDelete)
@@ -116,6 +120,7 @@ public class IServiceHandler implements IService.Iface {
             if(!abort){
               server.execTransaction(session);
 
+              System.out.println("back!");
               //若事务abort，返回错误信息
               if(session.isAbort){
                 resp.setStatus(new Status(Global.FAILURE_CODE));
@@ -125,10 +130,9 @@ public class IServiceHandler implements IService.Iface {
               }
               //若事务执行成功，返回结果
               else{
-                if(session.result == null){
-                  resp.getResultInfo().add("Transaction executes successfully!");
-                }
-                else{
+
+                resp.getResultInfo().add("Transaction executes successfully!");
+                if(session.result != null){
                   resp.setHasResult(true);
                   resp.setColumnsList(session.result.getColNames());
                   resp.setRowList(session.result.getDataListAsList());

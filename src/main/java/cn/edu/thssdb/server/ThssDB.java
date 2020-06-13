@@ -12,6 +12,7 @@ import cn.edu.thssdb.transaction.TransactionManager2PL;
 import cn.edu.thssdb.utils.Global;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.server.TThreadedSelectorServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
@@ -57,6 +58,7 @@ public class ThssDB {
     try {
       transport = new TServerSocket(Global.DEFAULT_SERVER_PORT);
       server = new TSimpleServer(new TServer.Args(transport).processor(processor));
+      //server = new TThreadedSelectorServer(new TServer.Args(transport).processor(processor));
       logger.info("Starting ThssDB ...");
       server.serve();
     } catch (TTransportException e) {
@@ -92,6 +94,7 @@ public class ThssDB {
     }
 
     try{
+      System.out.println("ThssDB start transaction");
       transactionManager.beginTransaction(session);
     }
     catch (Exception e){

@@ -22,7 +22,8 @@ public class TransactionManager2PL{
 
     public TransactionManager2PL(Database db, int level){
         this.db = db;
-        this.tableWriteLock = new HashMap();
+        this.tableWriteLock = new HashMap<>();
+        this.tableReadLock = new HashMap<>();
         this.isolation = level;
     }
 
@@ -33,6 +34,7 @@ public class TransactionManager2PL{
 
         db.lock.writeLock().lock();
         boolean canProceed = setWaitedSession(session);
+        System.out.println(canProceed);
         if(canProceed){
             session.inTransaction = true;
             lockTables(session);
@@ -40,6 +42,7 @@ public class TransactionManager2PL{
         }
         else if(!session.isAbort){
             setWaitingSession(session);
+            System.out.println("2PL - waiting");
         }
         db.lock.writeLock().unlock();
 
@@ -50,6 +53,8 @@ public class TransactionManager2PL{
 
     //逐条执行session中的语句
     public void beginExecution(Session session) throws IOException, ClassNotFoundException {
+        System.out.println("2PL - start exec");
+
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
 
@@ -90,18 +95,19 @@ public class TransactionManager2PL{
 
         int count = session.statement.size();
         for(int i=0; i<count; i++){
+            Object cs = session.statement.get(i);
+
+            System.out.println(cs);
+
             try {
-                if (session.statement.get(i) instanceof StatementInsert) {
-                    StatementInsert cs = (StatementInsert) session.statement.get(i);
-                    addInsert(session, cs);
+                if (cs instanceof StatementInsert) {
+                    addInsert(session, (StatementInsert) cs);
                 }
-                else if(session.statement.get(i) instanceof  StatementDelete){
-                    StatementDelete cs = (StatementDelete) session.statement.get(i);
-                    addDelete(session, cs);
+                else if(cs instanceof  StatementDelete){
+                    addDelete(session, (StatementDelete) cs);
                 }
-                else if(session.statement.get(i) instanceof  StatementUpdate){
-                    StatementUpdate cs = (StatementUpdate) session.statement.get(i);
-                    addUpdate(session, cs);
+                else if(cs instanceof  StatementUpdate){
+                    addUpdate(session, (StatementUpdate) cs);
                 }
                 /*
                 else if(session.statement.get(i) instanceof  StatementSelect){
@@ -114,9 +120,10 @@ public class TransactionManager2PL{
                 rollback(session);
                 break;
             }
-            session.f.delete();
+            //session.f.delete();
         }
 
+        System.out.println("2PL - finish exec");
         commit(session);
     }
 
@@ -127,18 +134,22 @@ public class TransactionManager2PL{
             throw new NullPointerException(NullPointerException.Session);
 
         session.temp.clear();
+        System.out.println(session.TableForWrite);
         for(String s: session.TableForWrite){
             Session holder = tableWriteLock.get(s);
+            System.out.println(holder==null);
             if(holder!=null && holder!=session){
                 session.temp.add(holder);
             }
 
+            /*
             if(isolation > READ_COMMITED) {
                 holder = tableReadLock.get(s);
                 if (holder != null && holder != session) {
                     session.temp.add(holder);
                 }
             }
+             */
         }
 
         if(isolation > READ_COMMITED) {
@@ -150,8 +161,11 @@ public class TransactionManager2PL{
             }
         }
 
+        System.out.println(session.temp.isEmpty());
+
         if(session.temp.isEmpty())
             return true;
+
 
         if(!checkDeadLock(session, session.temp))
             session.isAbort = true;
@@ -230,6 +244,7 @@ public class TransactionManager2PL{
         unlockTables(session);
         db.lock.writeLock().unlock();
 
+        System.out.println("2PL - finish commit");
         session.done = true;
     }
 
@@ -284,6 +299,7 @@ public class TransactionManager2PL{
         RowAction action = new RowAction(table_name, 1, null, res.getNewValue());
         session.rowActionList.add(action);
 
+        /*
         LinkedList<LinkedList> oldvalue = null;
         LinkedList<LinkedList> newvalue = res.getNewValue();
         FileOutputStream fileInputStream = new FileOutputStream(session.f);
@@ -292,7 +308,8 @@ public class TransactionManager2PL{
         oos.writeObject(1);
         oos.writeObject((oldvalue));
         oos.writeObject(newvalue);
-        oos.close();
+        oos.close();*/
+
     }
 
     public void addDelete(Session session, StatementDelete cs) throws IOException{
@@ -301,6 +318,7 @@ public class TransactionManager2PL{
         RowAction action = new RowAction(table_name, 2, res.getOldValue(), null);
         session.rowActionList.add(action);
 
+        /*
         LinkedList<LinkedList> oldvalue = res.getOldValue();
         LinkedList<LinkedList> newvalue = null;
         FileOutputStream fileInputStream = new FileOutputStream(session.f);
@@ -309,7 +327,7 @@ public class TransactionManager2PL{
         oos.writeObject(2);
         oos.writeObject((oldvalue));
         oos.writeObject(newvalue);
-        oos.close();
+        oos.close();*/
     }
 
     //TODO
@@ -320,6 +338,7 @@ public class TransactionManager2PL{
             RowAction action = new RowAction(table_name, 3, res.getOldValue(), res.getNewValue());
             session.rowActionList.add(action);
 
+            /*
             LinkedList<LinkedList> oldvalue = res.getOldValue();
             LinkedList<LinkedList> newvalue = res.getNewValue();
             FileOutputStream fileInputStream = new FileOutputStream(session.f);
@@ -328,7 +347,7 @@ public class TransactionManager2PL{
             oos.writeObject(3);
             oos.writeObject((oldvalue));
             oos.writeObject(newvalue);
-            oos.close();
+            oos.close();*/
         }
         catch (Exception e){}
     }

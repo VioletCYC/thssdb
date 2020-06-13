@@ -39,6 +39,9 @@ public class Session{
         this.rowActionList = new LinkedList<>();
         this.TableForWrite = new ArrayList<>();
         this.TableForRead = new ArrayList<>();
+        this.statement = new ArrayList<>();
+        this.temp = new LinkedHashSet<>();
+        this.waitingSession = new LinkedHashSet<>();
         this.f = new File(prefix + id +".log");
 //        if(!f.exists())
 //            f.createNewFile();
