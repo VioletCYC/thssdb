@@ -261,11 +261,12 @@ public class Table {
                         typeError = true;
                     break;
                 case FLOAT:
-                    if (!(value instanceof Float))
+                    if (!(value instanceof Float || value instanceof Double))
                         typeError = true;
                     break;
                 case DOUBLE:
-                    if (!(value instanceof Double))
+                    //如果输进来的是Float也可以接受
+                    if (!(value instanceof Double || value instanceof Float))
                         typeError = true;
                     break;
                 case STRING:

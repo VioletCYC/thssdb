@@ -115,8 +115,8 @@ public class Expression {
             case 1:
                 String tablename, attrname;
                 int idx;
-                //把“表名.属性”分开
-                if(this.symbolORValue.contains(".")) {
+                //如果需要的话，把“表名.属性”分开
+                if(!nameList.get(0).contains(".") && this.symbolORValue.contains(".")) {
                     attrname = symbolORValue.split("\\.")[1];
                     idx = nameList.indexOf((attrname));
                 }
