@@ -42,9 +42,14 @@ public class Session{
         this.statement = new ArrayList<>();
         this.temp = new LinkedHashSet<>();
         this.waitingSession = new LinkedHashSet<>();
+
+        File dir = new File(prefix);
+        if(!dir.exists())
+            dir.mkdirs();
+
         this.f = new File(prefix + id +".log");
-//        if(!f.exists())
-//            f.createNewFile();
+        if(!f.exists())
+            f.createNewFile();
     }
 
     public void AddInsert(StatementInsert cs){
@@ -86,4 +91,6 @@ public class Session{
     public ArrayList<String> getTableForWrite(){return this.TableForWrite;}
 
     public ArrayList<String> getTableForRead(){return this.TableForRead;}
+
+    public int getID(){return ID;}
 }

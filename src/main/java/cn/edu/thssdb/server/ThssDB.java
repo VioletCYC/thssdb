@@ -10,15 +10,15 @@ import cn.edu.thssdb.service.IServiceHandler;
 import cn.edu.thssdb.transaction.Session;
 import cn.edu.thssdb.transaction.TransactionManager2PL;
 import cn.edu.thssdb.utils.Global;
-import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TSimpleServer;
-import org.apache.thrift.server.TThreadedSelectorServer;
-import org.apache.thrift.transport.TServerSocket;
-import org.apache.thrift.transport.TTransportException;
+import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolManager;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.server.*;
+import org.apache.thrift.transport.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.crypto.Data;
+import java.nio.channels.Selector;
 
 public class ThssDB {
 
@@ -27,6 +27,7 @@ public class ThssDB {
   private static IServiceHandler handler;
   private static IService.Processor processor;
   private static TServerSocket transport;
+  private static TNonblockingServerTransport non_transport;
   private static TServer server;
 
   private Manager manager;
@@ -56,9 +57,29 @@ public class ThssDB {
 
   private static void setUp(IService.Processor processor) {
     try {
-      transport = new TServerSocket(Global.DEFAULT_SERVER_PORT);
-      server = new TSimpleServer(new TServer.Args(transport).processor(processor));
-      //server = new TThreadedSelectorServer(new TServer.Args(transport).processor(processor));
+
+      //transport = new TServerSocket(Global.DEFAULT_SERVER_PORT);
+      //server = new TSimpleServer(new TServer.Args(transport).processor(processor));
+
+      //将 TSimpleServer 替换为 TThreadedSelectorServer
+
+
+      TServerSocket serverSocket=new TServerSocket(Global.DEFAULT_SERVER_PORT);
+      TThreadPoolServer.Args serverParams=new TThreadPoolServer.Args(serverSocket);
+      //ThreadPoolManager tmanager = new
+      serverParams.protocolFactory(new TBinaryProtocol.Factory());
+      serverParams.processor(processor);
+      TServer server=new TThreadPoolServer(serverParams); //简单的单线程服务模型，常用于测试
+
+/*
+      TNonblockingServerTransport serverSocket=new TNonblockingServerSocket(Global.DEFAULT_SERVER_PORT);
+      TNonblockingServer.Args serverParams=new TNonblockingServer.Args(serverSocket);
+      serverParams.protocolFactory(new TBinaryProtocol.Factory());
+      serverParams.transportFactory(new TFramedTransport.Factory()); //非阻塞
+      serverParams.processor(processor);
+      TServer server=new TNonblockingServer(serverParams); //简单的单线程服务模型，常用于测试
+*/
+
       logger.info("Starting ThssDB ...");
       server.serve();
     } catch (TTransportException e) {
@@ -84,7 +105,7 @@ public class ThssDB {
     return database;
   }
 
-  public void execTransaction(Session session){
+  public synchronized void execTransaction(Session session){
     if(database == null){
       throw new NullPointerException(NullPointerException.Database);
     }
@@ -94,7 +115,7 @@ public class ThssDB {
     }
 
     try{
-      System.out.println("ThssDB start transaction");
+      System.out.println("session" + session.getID() + " go to transaction");
       transactionManager.beginTransaction(session);
     }
     catch (Exception e){

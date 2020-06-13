@@ -8,6 +8,7 @@ public class Global {
 
   public static String DEFAULT_SERVER_HOST = "127.0.0.1";
   public static int DEFAULT_SERVER_PORT = 6667;                  //同时启动多个客户端时，改变端口号
+  public static int DEFAULT_SERVER_PORT2 = 6666;
 
   public static String CLI_PREFIX = "ThssDB>";
   public static final String SHOW_TIME = "show time;";

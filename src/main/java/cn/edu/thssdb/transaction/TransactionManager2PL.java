@@ -1,11 +1,13 @@
 package cn.edu.thssdb.transaction;
 
+import cn.edu.thssdb.exception.FileException;
 import cn.edu.thssdb.exception.NullPointerException;
 import cn.edu.thssdb.query.*;
 import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.schema.Entry;
 import cn.edu.thssdb.schema.Table;
 
+import java.awt.*;
 import java.io.*;
 import java.util.*;
 
@@ -28,13 +30,13 @@ public class TransactionManager2PL{
     }
 
     //根据锁判断是否能进行该session的一系列操作
-    public void beginTransaction(Session session) throws IOException, ClassNotFoundException {
+    public synchronized void beginTransaction(Session session) throws IOException, ClassNotFoundException {
+        System.out.println("session" + session.getID() + " add into 2PL");
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
 
         db.lock.writeLock().lock();
         boolean canProceed = setWaitedSession(session);
-        System.out.println(canProceed);
         if(canProceed){
             session.inTransaction = true;
             lockTables(session);
@@ -42,7 +44,7 @@ public class TransactionManager2PL{
         }
         else if(!session.isAbort){
             setWaitingSession(session);
-            System.out.println("2PL - waiting");
+            System.out.println("session" + session.getID() + " waiting");
         }
         db.lock.writeLock().unlock();
 
@@ -53,7 +55,11 @@ public class TransactionManager2PL{
 
     //逐条执行session中的语句
     public void beginExecution(Session session) throws IOException, ClassNotFoundException {
-        System.out.println("2PL - start exec");
+        System.out.println("session " + session.getID() + " start exec");
+        try{
+            Thread.currentThread().sleep(10000);
+        }
+        catch (Exception e){}
 
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
@@ -90,30 +96,51 @@ public class TransactionManager2PL{
         }
         */
 
-        if(session.select_statement != null)
-            addSelect(session, session.select_statement);
-
         int count = session.statement.size();
         for(int i=0; i<count; i++){
             Object cs = session.statement.get(i);
 
-            System.out.println(cs);
 
             try {
+                String table_name = null;
+
                 if (cs instanceof StatementInsert) {
-                    addInsert(session, (StatementInsert) cs);
+                    StatementInsert cs1 = (StatementInsert) cs;
+                    ExecResult res = cs1.exec(db);
+                    table_name = cs1.gettable_name();
+                    RowAction action = new RowAction(table_name, 1, null, res.getNewValue());
+
+                    session.rowActionList.add(action);
+                    //newvalue = res.getNewValue();
+                    //type = 1;
                 }
                 else if(cs instanceof  StatementDelete){
-                    addDelete(session, (StatementDelete) cs);
+                    StatementDelete cs2 = (StatementDelete) cs;
+                    ExecResult res = cs2.exec(db);
+                    table_name = cs2.gettable_name();
+                    RowAction action = new RowAction(table_name, 2, res.getOldValue(), null);
+                    session.rowActionList.add(action);
+                    //oldvalue = res.getOldValue();
+                    //type = 2;
                 }
                 else if(cs instanceof  StatementUpdate){
-                    addUpdate(session, (StatementUpdate) cs);
+                    StatementUpdate cs3 = (StatementUpdate) cs;
+                    ExecResult res = cs3.exec(db);
+                    table_name = cs3.gettable_name();
+                    RowAction action = new RowAction(table_name, 3, res.getOldValue(), res.getNewValue());
+                    session.rowActionList.add(action);
+                    //newvalue = res.getNewValue();
+                    //oldvalue = res.getOldValue();
+                    //type = 3;
                 }
-                /*
-                else if(session.statement.get(i) instanceof  StatementSelect){
-                    StatementSelect cs = (StatementSelect) session.statement.get(i);
-                    addSelect(session, cs);
-                }*/
+
+                else if(cs instanceof  StatementSelect){
+                    StatementSelect cs4 = (StatementSelect) cs;
+                    ExecResult res = cs4.exec(db);
+                    unlockReadLock(session, cs4);
+                    session.result = res;
+                }
+
             }
             catch (Exception e){
                 session.isAbort = true;
@@ -123,7 +150,7 @@ public class TransactionManager2PL{
             //session.f.delete();
         }
 
-        System.out.println("2PL - finish exec");
+        System.out.println("session " + session.getID() + " finish exec");
         commit(session);
     }
 
@@ -134,10 +161,8 @@ public class TransactionManager2PL{
             throw new NullPointerException(NullPointerException.Session);
 
         session.temp.clear();
-        System.out.println(session.TableForWrite);
         for(String s: session.TableForWrite){
             Session holder = tableWriteLock.get(s);
-            System.out.println(holder==null);
             if(holder!=null && holder!=session){
                 session.temp.add(holder);
             }
@@ -161,7 +186,7 @@ public class TransactionManager2PL{
             }
         }
 
-        System.out.println(session.temp.isEmpty());
+        //System.out.println(session.temp.isEmpty());
 
         if(session.temp.isEmpty())
             return true;
@@ -231,6 +256,15 @@ public class TransactionManager2PL{
         db.lock.writeLock().lock();
         //持久化存储写过的表
         if(!session.isAbort) {
+            System.out.println("2PL - start persist");
+
+            writeLog(session);
+            //FileOutputStream fileInputStream = new FileOutputStream(session.f);
+            //ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
+            //oos.writeObject(session.rowActionList);
+            //oos.close();
+            //fileInputStream.close();
+
             for (String s : session.TableForWrite) {
                 try {
                     db.getTable(s).persist();
@@ -244,7 +278,8 @@ public class TransactionManager2PL{
         unlockTables(session);
         db.lock.writeLock().unlock();
 
-        System.out.println("2PL - finish commit");
+
+        System.out.println("session " + session.getID() + " finish commit");
         session.done = true;
     }
 
@@ -293,74 +328,6 @@ public class TransactionManager2PL{
         }
     }
 
-    public void addInsert(Session session, StatementInsert cs) throws IOException {
-        ExecResult res = cs.exec(db);
-        String table_name = cs.gettable_name();
-        RowAction action = new RowAction(table_name, 1, null, res.getNewValue());
-        session.rowActionList.add(action);
-
-        /*
-        LinkedList<LinkedList> oldvalue = null;
-        LinkedList<LinkedList> newvalue = res.getNewValue();
-        FileOutputStream fileInputStream = new FileOutputStream(session.f);
-        ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
-        oos.writeObject(cs.gettable_name());
-        oos.writeObject(1);
-        oos.writeObject((oldvalue));
-        oos.writeObject(newvalue);
-        oos.close();*/
-
-    }
-
-    public void addDelete(Session session, StatementDelete cs) throws IOException{
-        ExecResult res = cs.exec(db);
-        String table_name = cs.gettable_name();
-        RowAction action = new RowAction(table_name, 2, res.getOldValue(), null);
-        session.rowActionList.add(action);
-
-        /*
-        LinkedList<LinkedList> oldvalue = res.getOldValue();
-        LinkedList<LinkedList> newvalue = null;
-        FileOutputStream fileInputStream = new FileOutputStream(session.f);
-        ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
-        oos.writeObject(cs.gettable_name());
-        oos.writeObject(2);
-        oos.writeObject((oldvalue));
-        oos.writeObject(newvalue);
-        oos.close();*/
-    }
-
-    //TODO
-    public void addUpdate(Session session, StatementUpdate cs){
-        try{
-            ExecResult res = cs.exec(db);
-            String table_name = cs.gettable_name();
-            RowAction action = new RowAction(table_name, 3, res.getOldValue(), res.getNewValue());
-            session.rowActionList.add(action);
-
-            /*
-            LinkedList<LinkedList> oldvalue = res.getOldValue();
-            LinkedList<LinkedList> newvalue = res.getNewValue();
-            FileOutputStream fileInputStream = new FileOutputStream(session.f);
-            ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
-            oos.writeObject(cs.gettable_name());
-            oos.writeObject(3);
-            oos.writeObject((oldvalue));
-            oos.writeObject(newvalue);
-            oos.close();*/
-        }
-        catch (Exception e){}
-    }
-
-    //TODO
-    public void addSelect(Session session, StatementSelect cs){
-        try{
-            ExecResult res = cs.exec(db);
-            unlockReadLock(session, cs);
-            session.result = res;
-        }
-        catch (Exception e){}
-    }
 
     private void unlockReadLock(Session session, StatementSelect cs){
         if(isolation == REPEATABLE_READ) {
@@ -375,18 +342,81 @@ public class TransactionManager2PL{
     private void rollback(Session session){
         db.lock.writeLock().lock();
         int count = session.rowActionList.size();
-        for(int i=count-1; i>=0; i++){
-            RowAction tem = session.rowActionList.get(i);
-            if(tem.getType()==1){
-                LinkedList<LinkedList> newRow = tem.getNewRow();
-                for(LinkedList row: newRow){
+        try{
+            for(int i=count-1; i>=0; i++){
+                RowAction tem = session.rowActionList.get(i);
+                if (tem.getType() == 1) {
+                    for(LinkedList row: tem.getNewRow()){
+                        Table target = db.getTable(tem.getTable_name());
+                        Entry key = target.getKey(row);
+                        target.delete(key);
+                    }
+                }
+                if (tem.getType() == 2) {
+                    for(LinkedList row: tem.getOldRow()){
+                        Table target = db.getTable(tem.getTable_name());
+                        target.insert(row);
+                    }
+                }
+                if (tem.getType() == 3) {
+                    for(LinkedList row: tem.getNewRow()){
+                        Table target = db.getTable(tem.getTable_name());
+                        Entry key = target.getKey(row);
+                        target.delete(key);
+                    }
 
+                    for(LinkedList row: tem.getOldRow()){
+                        Table target = db.getTable(tem.getTable_name());
+                        target.insert(row);
+                    }
                 }
             }
+        }
+        catch (Exception e){
+
         }
 
         db.lock.writeLock().unlock();
     }
+
+    private void writeLog(Session session){
+        try{
+            StringBuilder sb = new StringBuilder();
+            for(RowAction action: session.rowActionList){
+                String insert = "insert";
+                String delete = "delete";
+                if(action.getNewRow()!=null){
+                    for(LinkedList row: action.getNewRow()){
+                        int count = row.size();
+                        sb.append(action.getTable_name()+" "+insert);
+                        for(int i=0; i<count; i++){
+                            sb.append(" "+ row.get(i).toString());
+                        }
+                        sb.append("\n");
+                    }
+                }
+
+                if(action.getOldRow()!=null){
+                    for(LinkedList row: action.getOldRow()){
+                        int count = row.size();
+                        sb.append(action.getTable_name()+" "+delete);
+                        for(int i=0; i<count; i++){
+                            sb.append(" "+row.get(i).toString());
+                        }
+                        sb.append("\n");
+                    }
+                }
+            }
+
+            FileWriter writer = new FileWriter(session.f);
+            writer.write(sb.toString());
+            writer.close();
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
+
 /*
     public void writeInsert(Session session, StatementInsert cs) throws IOException {
         Writer out =new FileWriter(session.f);

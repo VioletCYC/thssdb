@@ -22,4 +22,6 @@ public class RowAction {
     public LinkedList<LinkedList> getOldRow(){return oldRow;}
 
     public LinkedList<LinkedList> getNewRow(){return newRow;}
+
+    public String getTable_name(){return table_name;}
 }

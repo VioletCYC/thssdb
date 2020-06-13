@@ -53,14 +53,13 @@ public class IServiceHandler implements IService.Iface {
   }
 
   @Override
-  public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
+  public synchronized ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
     if (req.getSessionId() != Global.SessionID)
       throw new NDException("Please first connect to database!");
 
     //TODO: 处理传来的字符串 req_text，执行完后得到 ExecResult，根据内容创建 ExecuteStatementResp对象返回
     String req_text = req.getStatement();
     System.out.println(req_text);
-    System.out.println(database==null);
 
     ExecuteStatementResp resp = new ExecuteStatementResp();
     resp.setResultInfo(new LinkedList<>());
@@ -72,10 +71,6 @@ public class IServiceHandler implements IService.Iface {
     MyVisitor visitor = new MyVisitor();
     ArrayList res = (ArrayList) visitor.visit(parser.parse());
 
-    /*
-    if(database == null)
-      database = server.getDatabase();
-*/
 
     //如果第一条语句是begin transaction
     try{
@@ -94,12 +89,9 @@ public class IServiceHandler implements IService.Iface {
 
             Session session = new Session(database, sid);
 
-            System.out.println("sign2!");
-
             //将中间语句逐条加入session中
             for(int i=1; i<count; i++){
               Object cs = res.get(i);
-              System.out.println(cs.getClass());
               if(cs instanceof StatementInsert)
                 session.AddInsert((StatementInsert)cs);
               else if(cs instanceof StatementDelete)
@@ -114,13 +106,10 @@ public class IServiceHandler implements IService.Iface {
               }
             }
 
-            System.out.println("start transaction!");
-
             //语句有效，开始执行
             if(!abort){
               server.execTransaction(session);
 
-              System.out.println("back!");
               //若事务abort，返回错误信息
               if(session.isAbort){
                 resp.setStatus(new Status(Global.FAILURE_CODE));
@@ -130,7 +119,6 @@ public class IServiceHandler implements IService.Iface {
               }
               //若事务执行成功，返回结果
               else{
-
                 resp.getResultInfo().add("Transaction executes successfully!");
                 if(session.result != null){
                   resp.setHasResult(true);

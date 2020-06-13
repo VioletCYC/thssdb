@@ -11,7 +11,9 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -65,7 +67,10 @@ public class Client {
       String host = commandLine.getOptionValue(HOST_ARGS, Global.DEFAULT_SERVER_HOST);
       int port = Integer.parseInt(commandLine.getOptionValue(PORT_ARGS, String.valueOf(Global.DEFAULT_SERVER_PORT)));
       System.out.println(host + " " + port);
-      transport = new TSocket(host, port);
+
+
+      //transport = new TSocket(host, port);
+      transport = new TFramedTransport(new TSocket(host, port));
       transport.open();
       protocol = new TBinaryProtocol(transport);
       client = new IService.Client(protocol);
