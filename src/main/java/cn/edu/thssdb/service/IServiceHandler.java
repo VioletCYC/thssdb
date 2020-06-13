@@ -178,10 +178,17 @@ public class IServiceHandler implements IService.Iface {
         else {
           ExecResult result = ((AbstractStatement) statement).exec(database);
           //如果有要返回的结果
+          //select
           if(statement instanceof StatementSelect) {
             resp.setHasResult(true);
             resp.setColumnsList(result.getColNames());
             resp.setRowList(result.getDataListAsList());
+          }
+          //show table: 把列名的数据类型作为datalist传回来
+          else if(statement instanceof StatementShowTable) {
+            resp.setHasResult(true);
+            resp.setColumnsList(result.getColNames());
+            resp.setRowList(result.getTypeListAsList());
           }
           else {
             //如果不是select：只把msg添加进去

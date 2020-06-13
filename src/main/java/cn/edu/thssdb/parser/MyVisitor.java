@@ -138,11 +138,10 @@ public class MyVisitor extends SQLBaseVisitor {
     }
 
     @Override
-    public Object visitShow_table_stmt(SQLParser.Show_table_stmtContext ctx) {
+    public Object visitShow_meta_stmt(SQLParser.Show_meta_stmtContext ctx) {
         String tableName = ctx.getChild(2).getText().toUpperCase();
 
         return new StatementShowTable(tableName);
-//        return null;
     }
 
     @Override
