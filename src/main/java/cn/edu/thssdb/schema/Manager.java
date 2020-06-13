@@ -112,7 +112,7 @@ public class Manager {
     return databases.get(dbname);
   }
 
-  private void persist(){
+  public void persist(){
     //将hashmap写到文件中
     File f = new File(manager_file);
     if(!f.exists()){

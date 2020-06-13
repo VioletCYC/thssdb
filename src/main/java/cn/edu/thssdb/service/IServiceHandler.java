@@ -46,6 +46,7 @@ public class IServiceHandler implements IService.Iface {
   @Override
   public DisconnectResp disconnect(DisconnectReq req) throws TException {
     // TODO
+    server.quit();
     DisconnectResp resp = new DisconnectResp();
     resp.setStatus(new Status(Global.SUCCESS_CODE));
     return resp;
@@ -59,6 +60,7 @@ public class IServiceHandler implements IService.Iface {
     //TODO: 处理传来的字符串 req_text，执行完后得到 ExecResult，根据内容创建 ExecuteStatementResp对象返回
     String req_text = req.getStatement();
     System.out.println(req_text);
+    System.out.println(database==null);
 
     ExecuteStatementResp resp = new ExecuteStatementResp();
     resp.setResultInfo(new LinkedList<>());
@@ -85,11 +87,12 @@ public class IServiceHandler implements IService.Iface {
           if(begin.getType() == 1 && commit.getType() == 2){
             abort = false;
             int count = res.size()-1;
-
             Random r = new Random();
             int sid = r.nextInt(100);
+
             Session session = new Session(database, sid);
 
+            System.out.println("sign2!");
             //将中间语句逐条加入session中
             for(int i=1; i<count; i++){
               Object cs = res.get(i);
@@ -106,6 +109,8 @@ public class IServiceHandler implements IService.Iface {
                 break;
               }
             }
+
+            System.out.println("start transaction!");
 
             //语句有效，开始执行
             if(!abort){

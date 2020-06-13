@@ -71,7 +71,7 @@ public class ThssDB {
 
   public Database switchDatabase(String name){
     database = manager.switchDatabase(name);
-    return manager.switchDatabase(name);
+    return database;
   }
 
   public void deleteDatabase(String name){
@@ -100,6 +100,10 @@ public class ThssDB {
 
     while(!session.done);
 
+  }
+
+  public void quit(){
+    manager.persist();
   }
 
   private static class ThssDBHolder {
