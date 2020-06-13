@@ -70,15 +70,6 @@ public class StatementUpdate extends AbstractStatement{
         }
 //        targetTable.close();
         // for log
-        //LinkedList<LinkedList> oldvalue = oldvalue;
-        //LinkedList<LinkedList> newvalue = newvalue;
-        FileOutputStream fileInputStream = new FileOutputStream(session.f);
-        ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
-        oos.writeObject(this.targetTableName);
-        oos.writeObject(3);
-        oos.writeObject((oldvalue));
-        oos.writeObject(newvalue);
-        oos.close();
         //
 
         return new ExecResult("update " + succeed + " records!", 3, oldvalue, newvalue);

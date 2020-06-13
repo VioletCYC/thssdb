@@ -1,10 +1,13 @@
 package cn.edu.thssdb.server;
 
+import cn.edu.thssdb.query.ExecResult;
 import cn.edu.thssdb.rpc.thrift.ExecuteStatementResp;
+import cn.edu.thssdb.exception.NullPointerException;
 import cn.edu.thssdb.rpc.thrift.IService;
 import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.schema.Manager;
 import cn.edu.thssdb.service.IServiceHandler;
+import cn.edu.thssdb.transaction.Session;
 import cn.edu.thssdb.transaction.TransactionManager2PL;
 import cn.edu.thssdb.utils.Global;
 import org.apache.thrift.server.TServer;
@@ -77,6 +80,26 @@ public class ThssDB {
 
   public Database getDatabase() {
     return database;
+  }
+
+  public void execTransaction(Session session){
+    if(database == null){
+      throw new NullPointerException(NullPointerException.Database);
+    }
+
+    if(transactionManager == null){
+      transactionManager = new TransactionManager2PL(database, 2);
+    }
+
+    try{
+      transactionManager.beginTransaction(session);
+    }
+    catch (Exception e){
+
+    }
+
+    while(!session.done);
+
   }
 
   private static class ThssDBHolder {

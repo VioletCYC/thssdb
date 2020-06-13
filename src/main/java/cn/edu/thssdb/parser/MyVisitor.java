@@ -482,13 +482,10 @@ public class MyVisitor extends SQLBaseVisitor {
     public Object visitTransac_stmt(SQLParser.Transac_stmtContext ctx) {
         String trans = (String) visit(ctx.getChild(0));
         if(trans.equals("BEGIN TRANSACTION")) {
-
-        }
-        else {
-
+            return new StatementTransaction(1);
         }
         //TODO: 如何返回？
-        return null;
+        return new StatementTransaction(2);
     }
 
     @Override

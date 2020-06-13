@@ -55,15 +55,6 @@ public class StatementDelete extends AbstractStatement{
 
         // TODO: 写log
         // for log
-//        LinkedList<LinkedList> oldvalue = allRow;
-//        LinkedList<LinkedList> newvalue = null;
-//        FileOutputStream fileInputStream = new FileOutputStream(session.f);
-//        ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
-//        oos.writeObject(this.table_name);
-//        oos.writeObject(2);
-//        oos.writeObject((oldvalue));
-//        oos.writeObject(newvalue);
-//        oos.close();
         //
 
         return new ExecResult("Delete " + succeed + " rows.", 2, allRow, null);

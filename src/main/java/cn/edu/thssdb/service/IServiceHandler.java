@@ -10,6 +10,7 @@ import cn.edu.thssdb.query.StatementDatabase;
 import cn.edu.thssdb.rpc.thrift.*;
 import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.server.ThssDB;
+import cn.edu.thssdb.transaction.Session;
 import cn.edu.thssdb.utils.Global;
 import cn.edu.thssdb.query.*;
 import org.antlr.v4.runtime.CharStream;
@@ -68,6 +69,89 @@ public class IServiceHandler implements IService.Iface {
     SQLParser parser = new SQLParser(tokenStream);
     MyVisitor visitor = new MyVisitor();
     ArrayList res = (ArrayList) visitor.visit(parser.parse());
+
+    if(database == null)
+      database = server.getDatabase();
+
+    //如果第一条语句是begin transaction
+    try{
+      if(res.get(0) instanceof StatementTransaction){
+        boolean abort = true;
+        if(res.get(res.size()-1) instanceof StatementTransaction){
+          StatementTransaction begin = (StatementTransaction) res.get(0);
+          StatementTransaction commit = (StatementTransaction) res.get(res.size()-1);
+
+          //符合以begin开头 commit结尾
+          if(begin.getType() == 1 && commit.getType() == 2){
+            abort = false;
+            int count = res.size()-1;
+
+            Random r = new Random();
+            int sid = r.nextInt(100);
+            Session session = new Session(database, sid);
+
+            //将中间语句逐条加入session中
+            for(int i=1; i<count; i++){
+              Object cs = res.get(i);
+              if(cs instanceof StatementInsert)
+                session.AddInsert((StatementInsert)cs);
+              else if(cs instanceof StatementDelete)
+                session.AddDelete((StatementDelete) cs);
+              else if(cs instanceof StatementUpdate)
+                session.AddUpdate((StatementUpdate)cs);
+              else if(cs instanceof StatementSelect)
+                session.AddSelect((StatementSelect)cs);
+              else{
+                abort = true;
+                break;
+              }
+            }
+
+            //语句有效，开始执行
+            if(!abort){
+              server.execTransaction(session);
+
+              //若事务abort，返回错误信息
+              if(session.isAbort){
+                resp.setStatus(new Status(Global.FAILURE_CODE));
+                resp.setIsAbort(true);
+                resp.setErrorInfo("Transaction executes fail!");
+                return resp;
+              }
+              //若事务执行成功，返回结果
+              else{
+                if(session.result == null){
+                  resp.getResultInfo().add("Transaction executes successfully!");
+                }
+                else{
+                  resp.setHasResult(true);
+                  resp.setColumnsList(session.result.getColNames());
+                  resp.setRowList(session.result.getDataListAsList());
+                }
+
+                resp.setStatus(new Status(Global.SUCCESS_CODE));
+                return resp;
+              }
+            }
+          }
+        }
+
+        //事务语句解析错误
+        if(abort){
+          resp.setStatus(new Status(Global.FAILURE_CODE));
+          resp.setIsAbort(true);
+          resp.setErrorInfo("Invalid Transaction Statement!");
+          return resp;
+        }
+      }
+    }
+    catch (Exception e){
+      resp.setStatus(new Status(Global.FAILURE_CODE));
+      resp.setIsAbort(true);
+      resp.setErrorInfo(e.toString());
+      return resp;
+    }
+
     for (Object statement : res) {
       try {
         //如果是操作数据库的语句：直接送到ThssDB里执行

@@ -172,20 +172,6 @@ public class Client {
             playerInfo[i][j] = result.getRowList().get(i).get(j);
           }
         }
-//        Object[][] playerInfo = {
-//                // 创建表格中的数据
-//                { "王鹏", new Integer(91), new Integer(100), new Integer(191),
-//                        new Boolean(true) },
-//                { "朱学莲", new Integer(82), new Integer(69), new Integer(151),
-//                        new Boolean(true) },
-//                { "梅婷", new Integer(47), new Integer(57), new Integer(104),
-//                        new Boolean(false) },
-//                { "赵龙", new Integer(61), new Integer(57), new Integer(118),
-//                        new Boolean(false) },
-//                { "李兵", new Integer(90), new Integer(87), new Integer(177),
-//                        new Boolean(true) }, };
-//        // 创建表格中的横标题
-//        String[] Names = { "姓名", "语文", "数学", "总分", "及格" };
 
         // 以Names和playerInfo为参数，创建一个表格
         JFrame f = new JFrame();

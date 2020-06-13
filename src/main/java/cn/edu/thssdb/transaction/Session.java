@@ -24,10 +24,12 @@ public class Session{
     public ArrayList<String> TableForRead;
     public boolean inTransaction = false;
     public boolean isAbort = false;
+    public boolean done = false;
     public LinkedHashSet<Session> temp;                //该session正在等待哪些session
     public LinkedHashSet<Session> waitingSession;      //有哪些session在等待该session结束
     public ArrayList<AbstractStatement> statement;
-    public LinkedList<ExecResult> result;
+    public StatementSelect select_statement;
+    public ExecResult result;
     private String prefix = "log/";
     public  File f;
 
@@ -37,7 +39,6 @@ public class Session{
         this.rowActionList = new LinkedList<>();
         this.TableForWrite = new ArrayList<>();
         this.TableForRead = new ArrayList<>();
-        this.result = new LinkedList<>();
         this.f = new File(prefix + id +".log");
 //        if(!f.exists())
 //            f.createNewFile();
@@ -68,6 +69,7 @@ public class Session{
     }
 
     public void AddSelect(StatementSelect cs){
+        select_statement = cs;
         LinkedList<String> table_list = cs.getTargetList();
         for(String name: table_list){
             if(!TableForRead.contains(name)){
@@ -75,7 +77,6 @@ public class Session{
             }
         }
 
-        statement.add(cs);
     }
 
 

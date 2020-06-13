@@ -6,9 +6,7 @@ import cn.edu.thssdb.schema.Database;
 import cn.edu.thssdb.schema.Entry;
 import cn.edu.thssdb.schema.Table;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.util.*;
 
 
@@ -55,9 +53,7 @@ public class TransactionManager2PL{
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
 
-        if(session.isAbort)
-            return;
-
+        /*
         if (session.f.exists()) {
             //session.f.createNewFile();
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream(session.f));
@@ -87,6 +83,10 @@ public class TransactionManager2PL{
         else {
 
         }
+        */
+
+        if(session.select_statement != null)
+            addSelect(session, session.select_statement);
 
         int count = session.statement.size();
         for(int i=0; i<count; i++){
@@ -103,10 +103,11 @@ public class TransactionManager2PL{
                     StatementUpdate cs = (StatementUpdate) session.statement.get(i);
                     addUpdate(session, cs);
                 }
+                /*
                 else if(session.statement.get(i) instanceof  StatementSelect){
                     StatementSelect cs = (StatementSelect) session.statement.get(i);
                     addSelect(session, cs);
-                }
+                }*/
             }
             catch (Exception e){
                 session.isAbort = true;
@@ -208,7 +209,7 @@ public class TransactionManager2PL{
 
     //持久化存储，并释放所有锁
 
-    public LinkedList<ExecResult> commit(Session session) throws IOException, ClassNotFoundException {
+    public void commit(Session session) throws IOException, ClassNotFoundException {
 
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
@@ -223,15 +224,13 @@ public class TransactionManager2PL{
                     rollback(session);
                 }
             }
-            session.result.add(new ExecResult("transaction execution succeed!"));
+            //session.result.add(new ExecResult("transaction execution succeed!"));
         }
-        else{
-            session.result.add(new ExecResult("transaction abort!"));
-        }
+
         unlockTables(session);
         db.lock.writeLock().unlock();
 
-        return session.result;
+        session.done = true;
     }
 
     //commit后，释放所有锁
@@ -284,6 +283,16 @@ public class TransactionManager2PL{
         String table_name = cs.gettable_name();
         RowAction action = new RowAction(table_name, 1, null, res.getNewValue());
         session.rowActionList.add(action);
+
+        LinkedList<LinkedList> oldvalue = null;
+        LinkedList<LinkedList> newvalue = res.getNewValue();
+        FileOutputStream fileInputStream = new FileOutputStream(session.f);
+        ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
+        oos.writeObject(cs.gettable_name());
+        oos.writeObject(1);
+        oos.writeObject((oldvalue));
+        oos.writeObject(newvalue);
+        oos.close();
     }
 
     public void addDelete(Session session, StatementDelete cs) throws IOException{
@@ -291,6 +300,16 @@ public class TransactionManager2PL{
         String table_name = cs.gettable_name();
         RowAction action = new RowAction(table_name, 2, res.getOldValue(), null);
         session.rowActionList.add(action);
+
+        LinkedList<LinkedList> oldvalue = res.getOldValue();
+        LinkedList<LinkedList> newvalue = null;
+        FileOutputStream fileInputStream = new FileOutputStream(session.f);
+        ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
+        oos.writeObject(cs.gettable_name());
+        oos.writeObject(2);
+        oos.writeObject((oldvalue));
+        oos.writeObject(newvalue);
+        oos.close();
     }
 
     //TODO
@@ -300,6 +319,16 @@ public class TransactionManager2PL{
             String table_name = cs.gettable_name();
             RowAction action = new RowAction(table_name, 3, res.getOldValue(), res.getNewValue());
             session.rowActionList.add(action);
+
+            LinkedList<LinkedList> oldvalue = res.getOldValue();
+            LinkedList<LinkedList> newvalue = res.getNewValue();
+            FileOutputStream fileInputStream = new FileOutputStream(session.f);
+            ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
+            oos.writeObject(cs.gettable_name());
+            oos.writeObject(3);
+            oos.writeObject((oldvalue));
+            oos.writeObject(newvalue);
+            oos.close();
         }
         catch (Exception e){}
     }
@@ -309,7 +338,7 @@ public class TransactionManager2PL{
         try{
             ExecResult res = cs.exec(db);
             unlockReadLock(session, cs);
-            session.result.add(res);
+            session.result = res;
         }
         catch (Exception e){}
     }
