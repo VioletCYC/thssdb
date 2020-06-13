@@ -287,13 +287,14 @@ public class Client {
     inputs.add("insert into teach values (2, 'JianMin', 'SHUJUKU', 'Bob');");
     inputs.add("insert into teach values (3, 'JianMin', 'SHUJUKU', 'Zera');");
     inputs.add("insert into teach values (4, 'ChunPing', 'RENZHIDAO', 'Allen');");
+    inputs.add("show table person;");
 //        inputs.add("update person set name = 'Emily' where name = 'Bob';");
     inputs.add("select * from person;");
 //        inputs.add("select * from course where stu_name = 'Allen';");
 //        inputs.add("select ID from person join course on person.name=course.stu_name;");
 //    inputs.add("select distinct person.name, course.course_name from person join course on person.name=course.stu_name join teach on person.name=teach.s_name;");
     inputs.add("delete from person where ID = 15;");
-    inputs.add("drop table person;");
+    inputs.add("drop table teach;");
 
     for(String input: inputs) {
       execStatement(input);

@@ -173,6 +173,7 @@ public class ExecResult {
     public LinkedList<LinkedList> getDataList() {
         return dataList;
     }
+
     public List<List<String>>  getDataListAsList() {
         List<List<String>> lists = new LinkedList<>();
         for(int i = 0; i < dataList.size(); i++) {
@@ -184,6 +185,17 @@ public class ExecResult {
                 else
                     lists.get(i).add(value.toString());
             }
+        }
+        return lists;
+    }
+
+    public List<List<String>> getTypeListAsList() {
+        List<List<String>> lists = new LinkedList<>();
+        //只有一行
+        lists.add(new LinkedList<>());
+        for (int i = 0; i < typeList.size(); i++) {
+            Object value = typeList.get(i);
+            lists.get(0).add(value.toString());
         }
         return lists;
     }
