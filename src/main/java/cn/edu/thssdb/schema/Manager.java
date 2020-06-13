@@ -92,7 +92,7 @@ public class Manager {
       File[] files = someFile.listFiles();
       for (File subFile : files) {
         boolean isSuccess = subFile.delete();
-        //System.out.println(subFile.getName()+isSuccess);
+        System.out.println(subFile.getName()+isSuccess);
         if(!isSuccess)
           return false;
       }
