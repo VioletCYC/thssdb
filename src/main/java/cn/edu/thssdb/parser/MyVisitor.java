@@ -374,9 +374,9 @@ public class MyVisitor extends SQLBaseVisitor {
             Conditions cond1 = (Conditions) visit(ctx.getChild(0));
             Conditions cond2 = (Conditions) visit(ctx.getChild(2));
             String op = ctx.getChild(1).getText().toUpperCase();
-            if(op.equals("AND"))
+            if(op.equals("&&"))
                 return new Conditions(0, cond1, cond2);
-            else if(op.equals("OR"))
+            else if(op.equals("||"))
                 return new Conditions(1, cond1, cond2);
             else
                 throw new StatementException(StatementException.LOGICAL_OPERATION_TYPE_ERROR);

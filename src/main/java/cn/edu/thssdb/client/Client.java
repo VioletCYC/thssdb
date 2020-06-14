@@ -11,6 +11,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
+
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -23,6 +24,8 @@ import org.slf4j.LoggerFactory;
 import javax.naming.Name;
 import javax.swing.*;
 import java.awt.*;
+import java.io.*;
+
 import java.util.List;
 import java.util.LinkedList;
 import java.awt.event.WindowAdapter;
@@ -67,11 +70,13 @@ public class Client {
       String host = commandLine.getOptionValue(HOST_ARGS, Global.DEFAULT_SERVER_HOST);
       int port = Integer.parseInt(commandLine.getOptionValue(PORT_ARGS, String.valueOf(Global.DEFAULT_SERVER_PORT)));
       System.out.println(host + " " + port);
+
       //transport = new TSocket(host, port);
       transport = new TFramedTransport(new TSocket(host, port));
       transport.open();
       //protocol = new TBinaryProtocol(transport);
       protocol = new TCompactProtocol(transport);
+
       client = new IService.Client(protocol);
 
       boolean open = true;
@@ -109,6 +114,7 @@ public class Client {
         }
       }
       transport.close();
+
     } catch (TTransportException e) {
       logger.error(e.getMessage());
     }
@@ -304,4 +310,74 @@ public class Client {
       execStatement(input);
     }
   }
+
+  /*
+  public void test()
+          throws IOException {
+
+    String createDatabaseStatement = "create database test;";
+
+    String[] createTableStatements = {
+        "create table department (dept_name String(20), building String(15), budget Double, primary key(dept_name));",
+        "create table course (course_id String(8), title String(50), dept_name String(20), credits Int, primary key(course_id));",
+        "create table instructor (i_id String(5), i_name String(20) not null, dept_name String(20), salary Float, primary key(i_id));",
+        "create table student (s_id String(5), s_name String(20) not null, dept_name String(20), tot_cred Int, primary key(s_id));",
+        "create table advisor (s_id String(5), i_id String(5), primary key (s_id));"
+    };
+
+    List<String> insertStatements = loadInsertStatements();
+
+    execStatement(createDatabaseStatement);
+    for(String s: createTableStatements) {
+      execStatement(s);
+    }
+    for(String s: insertStatements) {
+      execStatement(s);
+    }
+
+//    ArrayList<String> inputs = new ArrayList<>();
+//    inputs.add("CREATE DATABASE testdb;"+"CREATE TABLE person (name String(256), ID Int not null, PRIMARY KEY(ID));"+"CREATE TABLE course (stu_name String(256), course_name String(128) not null, PRIMARY KEY(course_name));"+"CREATE TABLE teach (ID Int not null, t_name String(256), course_name String(128) not null, s_name String(128), PRIMARY KEY(ID));");
+//    inputs.add("insert into person (name, ID) values ('Bob', 15);");
+//    inputs.add("insert into person values ('Allen', 22);");
+//    inputs.add("insert into person values ('Nami', 18);");
+//    inputs.add("insert into person (ID) values (23);");
+//    inputs.add("insert into course values ('Allen', 'RENZHIDAO');");
+//    inputs.add("insert into course values ('Allen', 'RUANJIANFENXI');");
+//    inputs.add("insert into course values ('Bob', 'SHUJUKU');");
+//    inputs.add("insert into teach values (1, 'JiLiang', 'YIDONG', 'Allen');");
+//    inputs.add("insert into teach values (2, 'JianMin', 'SHUJUKU', 'Bob');");
+//    inputs.add("insert into teach values (3, 'JianMin', 'SHUJUKU', 'Zera');");
+//    inputs.add("insert into teach values (4, 'ChunPing', 'RENZHIDAO', 'Allen');");
+//    inputs.add("show table person;");
+////        inputs.add("update person set name = 'Emily' where name = 'Bob';");
+//    inputs.add("select * from person;");
+////        inputs.add("select * from course where stu_name = 'Allen';");
+////        inputs.add("select ID from person join course on person.name=course.stu_name;");
+////    inputs.add("select distinct person.name, course.course_name from person join course on person.name=course.stu_name join teach on person.name=teach.s_name;");
+//    inputs.add("delete from person where ID = 15;");
+//    inputs.add("drop table teach;");
+//
+//    for(String input: inputs) {
+//      execStatement(input);
+//    }
+  }*/
+
+    private static List<String> loadInsertStatements() throws IOException {
+      List<String> statements = new ArrayList<>();
+      File file = new File("insert_into.sql");
+      if (file.exists() && file.isFile()) {
+        FileInputStream fileInputStream = new FileInputStream(file);
+        InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
+        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+          statements.add(line);
+        }
+        bufferedReader.close();
+        inputStreamReader.close();
+        fileInputStream.close();
+      }
+      return statements;
+    }
+
 }

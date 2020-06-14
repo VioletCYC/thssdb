@@ -6,6 +6,7 @@ public class InsertException extends RuntimeException {
     public static int TYPE_MATCH_ERROR = 2;
     public static int KEY_DUPLICATE_ERROR = 3;
     public static int TYPE_CONVERT_ERROR = 4;
+    public static int NOTNULL_COLUMN_ERROR = 5;
 
     public InsertException(int type) {
         errortype = type;
@@ -22,6 +23,8 @@ public class InsertException extends RuntimeException {
             msg = "Exception: primary key already exists!";
         else if(errortype == TYPE_CONVERT_ERROR)
             msg = "Exception: unexpected type! Legal type: int,long,float,double,string.";
+        else if(errortype == NOTNULL_COLUMN_ERROR)
+            msg = "Exception: you must assign a value to a notnull column!";
         return msg;
     }
 }

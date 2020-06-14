@@ -249,6 +249,8 @@ public class Table {
             if(value == null) {
                 if(columns.get(i).canBeNull())
                     continue;
+                else
+                    throw new InsertException(InsertException.NOTNULL_COLUMN_ERROR);
             }
             boolean typeError = false;
             switch (columns.get(i).getType()) {
