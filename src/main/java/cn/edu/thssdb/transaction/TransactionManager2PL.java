@@ -56,10 +56,10 @@ public class TransactionManager2PL{
     //逐条执行session中的语句
     public void beginExecution(Session session) throws IOException, ClassNotFoundException {
         System.out.println("session " + session.getID() + " start exec");
-        try{
-            Thread.currentThread().sleep(10000);
-        }
-        catch (Exception e){}
+//        try{
+//            Thread.currentThread().sleep(7000);
+//        }
+//        catch (Exception e){}
 
         if(session == null)
             throw new NullPointerException(NullPointerException.Session);
@@ -139,6 +139,8 @@ public class TransactionManager2PL{
                     ExecResult res = cs4.exec(db);
                     unlockReadLock(session, cs4);
                     session.result = res;
+                    //System.out.println("Transaction select exec");
+                    //System.out.println(session.result == null);
                 }
 
             }
@@ -234,12 +236,14 @@ public class TransactionManager2PL{
         ArrayList<String> TableToWrite = session.getTableForWrite();
         for(String s: TableToWrite){
             this.tableWriteLock.put(s, session);
+            System.out.println("add write lock: "+ s);
         }
 
         if(this.isolation > READ_COMMITED){
             ArrayList<String> TableToRead = session.getTableForRead();
             for(String s: TableToRead){
                 this.tableReadLock.put(s, session);
+                System.out.println("add read lock");
             }
         }
 
@@ -256,8 +260,6 @@ public class TransactionManager2PL{
         db.lock.writeLock().lock();
         //持久化存储写过的表
         if(!session.isAbort) {
-            System.out.println("2PL - start persist");
-
             writeLog(session);
             //FileOutputStream fileInputStream = new FileOutputStream(session.f);
             //ObjectOutputStream oos = new ObjectOutputStream(fileInputStream);
@@ -292,6 +294,7 @@ public class TransactionManager2PL{
         while (it.hasNext()) {
             Session s = (Session) it.next();
             if (s == session) {
+                System.out.println("free write lock");
                 it.remove();
             }
         }
@@ -300,6 +303,7 @@ public class TransactionManager2PL{
         while (it.hasNext()) {
             Session s = (Session) it.next();
             if (s == session) {
+                System.out.println("free read lock");
                 it.remove();
             }
         }
@@ -333,6 +337,7 @@ public class TransactionManager2PL{
         if(isolation == REPEATABLE_READ) {
             LinkedList<String> table_list = cs.getTargetList();
             for (String s : table_list) {
+                System.out.println("free read lock");
                 tableReadLock.remove(s);
             }
         }
@@ -417,15 +422,5 @@ public class TransactionManager2PL{
         }
     }
 
-/*
-    public void writeInsert(Session session, StatementInsert cs) throws IOException {
-        Writer out =new FileWriter(session.f);
-
-<<<<<<< HEAD
-    public void setIsolation(int level){isolation=level;}
-}
-=======
-    }
-*/
 }
 

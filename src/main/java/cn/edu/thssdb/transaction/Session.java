@@ -77,7 +77,7 @@ public class Session{
     }
 
     public void AddSelect(StatementSelect cs){
-        select_statement = cs;
+        statement.add(cs);
         LinkedList<String> table_list = cs.getTargetList();
         for(String name: table_list){
             if(!TableForRead.contains(name)){

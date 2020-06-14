@@ -116,5 +116,13 @@ public class StatementSelect extends AbstractStatement{
         }
     }
 
-    public LinkedList<String> getTargetList(){return targetList;}
+    public LinkedList<String> getTargetList(){
+        /*
+        LinkedList<String> tname = new LinkedList<>();
+        for(Table t: rv.getTableList()){
+            tname.add(t.getTableName());
+        }
+        return tname;*/
+        return targetList;
+    }
 }

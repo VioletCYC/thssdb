@@ -121,6 +121,7 @@ public class IServiceHandler implements IService.Iface {
               else{
                 resp.getResultInfo().add("Transaction executes successfully!");
                 if(session.result != null){
+                  //System.out.println("Transaction has select!");
                   resp.setHasResult(true);
                   resp.setColumnsList(session.result.getColNames());
                   resp.setRowList(session.result.getDataListAsList());
